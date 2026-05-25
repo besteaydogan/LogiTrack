@@ -1,0 +1,96 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: logitrack-postgres
+    environment:
+      POSTGRES_DB: logitrack
+      POSTGRES_USER: logitrack
+      POSTGRES_PASSWORD: logitrack
+    ports:
+      - "55432:5432"
+    volumes:
+      - logitrack_postgres_data:/var/lib/postgresql/data
+      - ./database/migrations/001_init_schema.sql:/docker-entrypoint-initdb.d/001_init_schema.sql:ro
+      - ./database/seed/001_seed_demo_data.sql:/docker-entrypoint-initdb.d/002_seed_demo_data.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U logitrack -d logitrack"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend-api:
+    build:
+      context: ./services/backend-api
+    container_name: logitrack-backend-api
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/logitrack
+      SPRING_DATASOURCE_USERNAME: logitrack
+      SPRING_DATASOURCE_PASSWORD: logitrack
+      LOGITRACK_CORS_ALLOWED_ORIGIN: http://localhost:5173,http://127.0.0.1:5173
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  redpanda:
+    image: redpandadata/redpanda:v24.2.18
+    container_name: logitrack-redpanda
+    command:
+      - redpanda
+      - start
+      - --overprovisioned
+      - --smp
+      - "1"
+      - --memory
+      - 512M
+      - --reserve-memory
+      - 0M
+      - --node-id
+      - "0"
+      - --check=false
+      - --kafka-addr
+      - INTERNAL://0.0.0.0:9092,OUTSIDE://0.0.0.0:19092
+      - --advertise-kafka-addr
+      - INTERNAL://redpanda:9092,OUTSIDE://localhost:19092
+    ports:
+      - "19092:19092"
+      - "9644:9644"
+
+  data-simulator:
+    build:
+      context: ./services/data-simulator
+    container_name: logitrack-data-simulator
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
+      SIMULATOR_INTERVAL_SECONDS: 4
+    depends_on:
+      - redpanda
+
+  stream-consumer:
+    build:
+      context: ./services/stream-consumer
+    container_name: logitrack-stream-consumer
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
+      DATABASE_URL: postgresql://logitrack:logitrack@postgres:5432/logitrack
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redpanda:
+        condition: service_started
+
+  analytics-service:
+    build:
+      context: ./services/analytics-service
+    container_name: logitrack-analytics-service
+    environment:
+      DATABASE_URL: postgresql://logitrack:logitrack@postgres:5432/logitrack
+    ports:
+      - "8501:8501"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  logitrack_postgres_data:
