@@ -1,0 +1,35 @@
+{
+  "name": "logitrack",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm build && pnpm preview",
+    "dev:standalone": "pnpm --parallel --filter @logitrack/shell --filter @logitrack/analytics --filter @logitrack/fleet-dashboard --filter @logitrack/delivery-management --filter @logitrack/alert-center dev",
+    "dev:shell": "pnpm --filter @logitrack/shell dev",
+    "dev:analytics": "pnpm --filter @logitrack/analytics dev",
+    "dev:fleet": "pnpm --filter @logitrack/fleet-dashboard dev",
+    "dev:delivery": "pnpm --filter @logitrack/delivery-management dev",
+    "dev:alerts": "pnpm --filter @logitrack/alert-center dev",
+    "build": "pnpm --filter @logitrack/analytics build && pnpm --filter @logitrack/fleet-dashboard build && pnpm --filter @logitrack/delivery-management build && pnpm --filter @logitrack/alert-center build && pnpm --filter @logitrack/shell build",
+    "lint": "pnpm --filter @logitrack/shell --filter @logitrack/analytics --filter @logitrack/fleet-dashboard --filter @logitrack/delivery-management --filter @logitrack/alert-center lint",
+    "test": "pnpm --filter @logitrack/shell test",
+    "test:frontend": "pnpm --filter @logitrack/shell test",
+    "preview": "pnpm --parallel --filter @logitrack/shell --filter @logitrack/analytics --filter @logitrack/fleet-dashboard --filter @logitrack/delivery-management --filter @logitrack/alert-center preview",
+    "preview:shell": "pnpm --filter @logitrack/shell preview",
+    "preview:analytics": "pnpm --filter @logitrack/analytics preview",
+    "preview:fleet": "pnpm --filter @logitrack/fleet-dashboard preview",
+    "preview:delivery": "pnpm --filter @logitrack/delivery-management preview",
+    "preview:alerts": "pnpm --filter @logitrack/alert-center preview"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.27.0",
+    "@originjs/vite-plugin-federation": "^1.4.1",
+    "eslint": "^9.27.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.20",
+    "globals": "^16.1.0",
+    "prettier": "^3.5.3",
+    "typescript-eslint": "^8.32.1"
+  }
+}
