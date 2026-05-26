@@ -1,0 +1,6 @@
+id,city,district,risk_score
+REG-ANK-CAN,Ankara,Cankaya,72
+REG-IST-KAD,Istanbul,Kadikoy,81
+REG-IST-SIS,Istanbul,Sisli,66
+REG-IZM-KON,Izmir,Konak,58
+REG-BUR-NIL,Bursa,Nilufer,49

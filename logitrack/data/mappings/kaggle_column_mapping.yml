@@ -1,0 +1,58 @@
+source: delivery-logistics-dataset
+
+entities:
+  deliveries:
+    tracking_number:
+      source_candidates:
+        - tracking_number
+        - shipment_id
+        - order_id
+        - delivery_id
+      fallback: generated
+    status:
+      source_candidates:
+        - status
+        - delivery_status
+        - shipment_status
+      fallback: generated
+    region:
+      source_candidates:
+        - region
+        - destination_region
+        - destination_city
+        - city
+      fallback: generated
+    estimated_delivery_time:
+      source_candidates:
+        - estimated_delivery_time
+        - expected_delivery_time
+        - eta
+        - expected_time_hours
+      fallback: generated
+    actual_delivery_time:
+      source_candidates:
+        - actual_delivery_time
+        - delivered_at
+        - delivery_time
+        - delivery_time_hours
+      fallback: nullable
+    delay_minutes:
+      source_candidates:
+        - delay_minutes
+        - delay
+        - delivery_delay
+        - delayed
+      fallback: calculated_or_zero
+
+generated_entities:
+  vehicles: true
+  warehouses: true
+  regions: true
+  alerts: true
+
+unused_future_enrichment_columns:
+  delivery_partner: "Not persisted in the MVP schema; can later become carrier metadata."
+  package_type: "Used only as a light priority signal in the MVP ETL."
+  package_weight_kg: "Used for vehicle capacity assignment."
+  delivery_cost: "Not persisted in the MVP schema."
+  delivery_rating: "Not persisted in the MVP schema; candidate for future driver or route quality analytics."

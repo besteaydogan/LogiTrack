@@ -19,6 +19,12 @@ data/raw/*
 data/processed/*
 !data/raw/.gitkeep
 !data/processed/.gitkeep
+!data/raw/kaggle/
+!data/raw/kaggle/delivery-logistics/
+!data/raw/kaggle/delivery-logistics/README.md
+!data/processed/kaggle/
+!data/processed/kaggle/*.csv
+!data/processed/kaggle/import_summary.json
 !data/sample/
 !data/sample/**
 
@@ -29,3 +35,9 @@ target/
 # Other build outputs
 build/
 out/
+
+# Kaggle raw datasets
+data/raw/kaggle/**/*.csv
+data/raw/kaggle/**/*.json
+data/raw/kaggle/**/*.xlsx
+data/raw/kaggle/**/*.zip

@@ -1,0 +1,51 @@
+{
+  "source": "delivery-logistics-dataset",
+  "input": "data\\raw\\kaggle\\delivery-logistics\\original.csv",
+  "sourceColumns": [
+    "delivery_id",
+    "delivery_partner",
+    "package_type",
+    "vehicle_type",
+    "delivery_mode",
+    "region",
+    "weather_condition",
+    "distance_km",
+    "package_weight_kg",
+    "delivery_time_hours",
+    "expected_time_hours",
+    "delayed",
+    "delivery_status",
+    "delivery_rating",
+    "delivery_cost"
+  ],
+  "rawRows": 25000,
+  "maxRows": 5000,
+  "deliveries": 5000,
+  "vehicles": 20,
+  "warehouses": 4,
+  "regions": 5,
+  "alerts": 1327,
+  "delayedDeliveries": 1327,
+  "statusCounts": {
+    "DELIVERED": 3673,
+    "DELAYED": 1327
+  },
+  "fixedRegions": [
+    "Ankara-Cankaya",
+    "Istanbul-Kadikoy",
+    "Istanbul-Sisli",
+    "Izmir-Konak",
+    "Bursa-Nilufer"
+  ],
+  "unusedFutureEnrichmentColumns": [
+    "delivery_partner",
+    "delivery_cost",
+    "delivery_rating"
+  ],
+  "notes": [
+    "Unsupported source regions are deterministically assigned to fixed LogiTrack demo regions.",
+    "delivery_partner is not persisted in the MVP schema.",
+    "package_weight_kg contributes to generated vehicle capacity.",
+    "The ETL supports the full 25k-row dataset; the demo import uses 5k rows for local performance."
+  ]
+}

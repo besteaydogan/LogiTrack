@@ -259,6 +259,32 @@ python scripts/import_historical_data.py --csv data/raw/<kaggle-file>.csv
 python scripts/check_data_quality.py
 ```
 
+## Kaggle Dataset Import
+
+LogiTrack uses Kaggle logistics datasets as offline historical data sources. Raw Kaggle files are not loaded at runtime and are not committed to the repository.
+
+Data flow:
+
+```text
+Kaggle CSV
+-> local ETL transform
+-> normalized LogiTrack CSV files
+-> PostgreSQL seed/import
+-> REST, GraphQL, 2D Fleet Map, and 3D Operations View
+```
+
+Run ETL:
+
+```bash
+python services/data-etl/kaggle_import/transform_kaggle_dataset.py \
+  --input data/raw/kaggle/delivery-logistics/original.csv \
+  --output data/processed/kaggle \
+  --max-rows 5000 \
+  --seed 42
+```
+
+The ETL supports the full 25k-row dataset, but the default demo import uses 5k rows to keep local seed/import and frontend rendering fast. Integration details are documented in [Kaggle dataset integration](docs/kaggle-dataset-integration.md).
+
 More detail:
 
 - [Dataset selection](docs/dataset-selection.md)

@@ -12,6 +12,8 @@ services:
       - logitrack_postgres_data:/var/lib/postgresql/data
       - ./database/migrations/001_init_schema.sql:/docker-entrypoint-initdb.d/001_init_schema.sql:ro
       - ./database/seed/001_seed_demo_data.sql:/docker-entrypoint-initdb.d/002_seed_demo_data.sql:ro
+      - ./database/seed/import_kaggle_seed.sql:/docker-entrypoint-initdb.d/003_import_kaggle_seed.sql:ro
+      - ./database/seed:/docker-entrypoint-initdb.d/seed:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U logitrack -d logitrack"]
       interval: 5s
