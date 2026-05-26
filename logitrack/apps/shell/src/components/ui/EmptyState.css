@@ -1,0 +1,20 @@
+.empty-state {
+  display: grid;
+  gap: 10px;
+  place-items: start;
+  max-width: 680px;
+  padding: 32px;
+  border: 1px dashed #abc0d5;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.empty-state h2,
+.empty-state p {
+  margin: 0;
+}
+
+.empty-state p {
+  color: #607285;
+  line-height: 1.6;
+}
