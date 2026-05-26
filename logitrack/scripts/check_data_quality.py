@@ -29,6 +29,17 @@ class Check:
 
 CHECKS = [
     Check(
+        "duplicate_delivery_ids",
+        "critical",
+        """
+        SELECT COUNT(*) FROM (
+          SELECT id FROM deliveries
+          GROUP BY id
+          HAVING COUNT(*) > 1
+        ) duplicate_ids
+        """,
+    ),
+    Check(
         "duplicate_delivery_tracking_numbers",
         "critical",
         """
@@ -39,8 +50,24 @@ CHECKS = [
         ) duplicate_tracking
         """,
     ),
+    Check(
+        "deliveries_missing_timestamp",
+        "critical",
+        """
+        SELECT COUNT(*) FROM deliveries
+        WHERE estimated_delivery_time IS NULL OR last_updated_at IS NULL
+        """,
+    ),
     Check("deliveries_missing_region", "critical", "SELECT COUNT(*) FROM deliveries WHERE region IS NULL OR region = ''"),
     Check("deliveries_missing_status", "critical", "SELECT COUNT(*) FROM deliveries WHERE status IS NULL OR status = ''"),
+    Check(
+        "deliveries_invalid_status",
+        "critical",
+        """
+        SELECT COUNT(*) FROM deliveries
+        WHERE status NOT IN ('CREATED', 'ASSIGNED', 'IN_TRANSIT', 'DELAYED', 'DELIVERED', 'CANCELLED')
+        """,
+    ),
     Check(
         "delivery_vehicle_fk_orphans",
         "critical",
@@ -68,6 +95,16 @@ CHECKS = [
         "vehicles_missing_coordinates",
         "warning",
         "SELECT COUNT(*) FROM vehicles WHERE last_latitude IS NULL OR last_longitude IS NULL",
+    ),
+    Check(
+        "vehicles_invalid_coordinates",
+        "critical",
+        """
+        SELECT COUNT(*) FROM vehicles
+        WHERE last_latitude IS NOT NULL
+          AND last_longitude IS NOT NULL
+          AND (last_latitude < -90 OR last_latitude > 90 OR last_longitude < -180 OR last_longitude > 180)
+        """,
     ),
 ]
 

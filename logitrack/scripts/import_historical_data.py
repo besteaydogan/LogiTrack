@@ -19,9 +19,9 @@ DEFAULT_PROCESSED = ROOT / "data" / "processed" / "historical_deliveries_normali
 DEFAULT_DATABASE_URL = "postgresql://logitrack:logitrack@localhost:55432/logitrack"
 
 STATUS_MAP = {
-    "created": "PENDING",
-    "pending": "PENDING",
-    "assigned": "PENDING",
+    "created": "CREATED",
+    "pending": "CREATED",
+    "assigned": "ASSIGNED",
     "in transit": "IN_TRANSIT",
     "in_transit": "IN_TRANSIT",
     "out for delivery": "IN_TRANSIT",
@@ -35,9 +35,9 @@ STATUS_MAP = {
 
 PRIORITY_MAP = {
     "low": "LOW",
-    "normal": "MEDIUM",
-    "medium": "MEDIUM",
-    "standard": "MEDIUM",
+    "normal": "NORMAL",
+    "medium": "NORMAL",
+    "standard": "NORMAL",
     "high": "HIGH",
     "urgent": "URGENT",
     "critical": "URGENT",
@@ -145,7 +145,7 @@ def normalize_status(value: str, estimated: datetime, actual: datetime | None, d
 
 
 def normalize_priority(value: str) -> str:
-    return PRIORITY_MAP.get(value.strip().lower(), "MEDIUM")
+    return PRIORITY_MAP.get(value.strip().lower(), "NORMAL")
 
 
 def normalize_row(row: dict[str, str], index: int) -> NormalizedDelivery:
