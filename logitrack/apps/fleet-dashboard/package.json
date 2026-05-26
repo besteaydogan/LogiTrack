@@ -1,0 +1,32 @@
+{
+  "name": "@logitrack/fleet-dashboard",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0 --port 5175 --strictPort",
+    "build": "tsc -b && vite build",
+    "lint": "eslint . --config ../../eslint.config.js",
+    "preview": "vite preview --host 0.0.0.0 --port 5175 --strictPort"
+  },
+  "dependencies": {
+    "@logitrack/api-client": "workspace:*",
+    "@logitrack/types": "workspace:*",
+    "@logitrack/ui": "workspace:*",
+    "@tanstack/react-query": "^5.80.2",
+    "leaflet": "^1.9.4",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-leaflet": "^5.0.0",
+    "react-router-dom": "^7.15.1"
+  },
+  "devDependencies": {
+    "@types/leaflet": "^1.9.21",
+    "@types/react": "^19.1.5",
+    "@types/react-dom": "^19.1.5",
+    "@vitejs/plugin-react": "^4.4.1",
+    "typescript": "~5.8.3",
+    "vite": "^6.3.5",
+    "vite-tsconfig-paths": "^5.1.4"
+  }
+}
