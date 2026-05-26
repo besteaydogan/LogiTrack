@@ -22,11 +22,12 @@ public class CorsConfig {
         .map(String::trim)
         .filter(origin -> !origin.isBlank())
         .toList());
-    configuration.setAllowedMethods(List.of("GET", "PATCH", "OPTIONS"));
+    configuration.setAllowedMethods(List.of("GET", "PATCH", "POST", "OPTIONS"));
     configuration.setAllowedHeaders(List.of("*"));
 
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
     source.registerCorsConfiguration("/api/**", configuration);
+    source.registerCorsConfiguration("/graphql", configuration);
     return new CorsFilter(source);
   }
 }
