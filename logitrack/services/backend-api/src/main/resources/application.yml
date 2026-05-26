@@ -1,0 +1,23 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: backend-api
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/logitrack}
+    username: ${SPRING_DATASOURCE_USERNAME:logitrack}
+    password: ${SPRING_DATASOURCE_PASSWORD:logitrack}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          time_zone: UTC
+
+logitrack:
+  cors:
+    allowed-origin: ${LOGITRACK_CORS_ALLOWED_ORIGIN:http://localhost:5173}
