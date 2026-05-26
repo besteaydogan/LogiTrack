@@ -26,7 +26,7 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/logitrack
       SPRING_DATASOURCE_USERNAME: logitrack
       SPRING_DATASOURCE_PASSWORD: logitrack
-      LOGITRACK_CORS_ALLOWED_ORIGIN: http://localhost:5173,http://127.0.0.1:5173
+      LOGITRACK_CORS_ALLOWED_ORIGIN: http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174,http://localhost:5175,http://127.0.0.1:5175,http://localhost:5176,http://127.0.0.1:5176,http://localhost:5177,http://127.0.0.1:5177
     ports:
       - "8080:8080"
     depends_on:
