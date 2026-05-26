@@ -1,0 +1,136 @@
+.analytics-page {
+  display: grid;
+  gap: 22px;
+}
+
+.analytics-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+.analytics-filters label {
+  display: grid;
+  gap: 0.3rem;
+  color: #526579;
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.analytics-filters input {
+  min-height: 38px;
+  width: 150px;
+  border: 1px solid #c7d7e4;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #102033;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 0.45rem 0.6rem;
+}
+
+.analytics-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.analytics-kpi {
+  min-width: 0;
+  border: 1px solid #d8e4ee;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 1rem;
+}
+
+.analytics-kpi span,
+.analytics-kpi strong {
+  display: block;
+}
+
+.analytics-kpi span {
+  color: #607386;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.analytics-kpi strong {
+  margin-top: 0.4rem;
+  color: #102033;
+  font-size: 1.75rem;
+  line-height: 1;
+}
+
+.analytics-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.analytics-chart {
+  min-height: 280px;
+  border: 1px solid #d8e4ee;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 1rem;
+}
+
+.analytics-table-section {
+  display: grid;
+  gap: 12px;
+}
+
+.analytics-table-section__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.analytics-table-section__header h3,
+.analytics-table-section__header p {
+  margin: 0;
+}
+
+.analytics-table-section__header h3 {
+  color: #152b41;
+  font-size: 1rem;
+}
+
+.analytics-table-section__header p {
+  margin-top: 4px;
+  color: #687b8d;
+  line-height: 1.5;
+}
+
+@media (max-width: 1040px) {
+  .analytics-kpis,
+  .analytics-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .analytics-filters {
+    justify-content: stretch;
+  }
+
+  .analytics-filters label,
+  .analytics-filters input {
+    width: 100%;
+  }
+
+  .analytics-kpis,
+  .analytics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .analytics-table-section__header {
+    display: grid;
+  }
+}
