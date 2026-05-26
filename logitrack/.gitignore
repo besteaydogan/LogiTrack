@@ -21,3 +21,11 @@ data/processed/*
 !data/processed/.gitkeep
 !data/sample/
 !data/sample/**
+
+# Java / Spring Boot build outputs
+target/
+*.class
+
+# Other build outputs
+build/
+out/
