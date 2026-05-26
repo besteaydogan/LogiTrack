@@ -1,0 +1,23 @@
+.dashboard-section {
+  min-width: 0;
+}
+
+.dashboard-section__header {
+  margin-bottom: 12px;
+}
+
+.dashboard-section__header h3,
+.dashboard-section__header p {
+  margin: 0;
+}
+
+.dashboard-section__header h3 {
+  color: #152b41;
+  font-size: 1rem;
+}
+
+.dashboard-section__header p {
+  margin-top: 4px;
+  color: #687b8d;
+  line-height: 1.5;
+}

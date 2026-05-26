@@ -1,0 +1,27 @@
+.status-summary {
+  display: grid;
+  gap: 14px;
+}
+
+.status-summary__chart {
+  min-width: 0;
+  height: 260px;
+}
+
+.status-summary__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.status-summary__legend span {
+  padding: 7px 9px;
+  border-radius: 8px;
+  background: #eef5fb;
+  color: #334b63;
+  font-size: 0.82rem;
+}
+
+.status-summary__legend strong {
+  color: #102033;
+}

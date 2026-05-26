@@ -1,0 +1,58 @@
+.recent-alerts {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.recent-alerts__item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #edf2f7;
+}
+
+.recent-alerts__item:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.recent-alerts__content {
+  min-width: 0;
+}
+
+.recent-alerts__meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: #647789;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.recent-alerts p {
+  margin: 8px 0 6px;
+  color: #1c3348;
+  line-height: 1.45;
+}
+
+.recent-alerts__region,
+.recent-alerts time {
+  color: #66798c;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.recent-alerts time {
+  flex: 0 0 auto;
+}
+
+@media (max-width: 520px) {
+  .recent-alerts__item {
+    display: grid;
+  }
+}
