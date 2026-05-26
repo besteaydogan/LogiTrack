@@ -1,0 +1,6 @@
+order_id,tracking_number,city,district,status,priority,driver_name,driver_rating,vehicle_plate,vehicle_type,warehouse_name,estimated_delivery_time,actual_delivery_time,delay_minutes,latitude,longitude
+10001,HIST-10001,Istanbul,Kadikoy,DELIVERED,HIGH,Ayse Demir,4.8,34 HIST 101,Box Truck,Kadikoy DC,2026-04-18T12:30:00+03:00,2026-04-18T12:42:00+03:00,12,40.9917,29.0275
+10002,HIST-10002,Ankara,Cankaya,DELIVERED,MEDIUM,Mehmet Kaya,4.6,06 HIST 202,Cargo Van,Cankaya Hub,2026-04-19T15:15:00+03:00,2026-04-19T15:05:00+03:00,0,39.9208,32.8541
+10003,HIST-10003,Izmir,Konak,DELAYED,URGENT,Elif Yilmaz,4.7,35 HIST 303,Refrigerated Truck,Konak Warehouse,2026-04-20T10:00:00+03:00,,45,38.4237,27.1428
+10004,HIST-10004,Bursa,Nilufer,IN_TRANSIT,LOW,Can Arslan,4.4,16 HIST 404,Box Truck,Nilufer Depot,2026-04-21T18:00:00+03:00,,0,40.2130,28.9840
+10005,HIST-10005,Antalya,Muratpasa,DELIVERED,MEDIUM,Zeynep Sahin,4.9,07 HIST 505,Cargo Van,Muratpasa Hub,2026-04-22T09:45:00+03:00,2026-04-22T10:31:00+03:00,46,36.8969,30.7133
