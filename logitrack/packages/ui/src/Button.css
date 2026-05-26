@@ -1,0 +1,33 @@
+.button {
+  min-height: 40px;
+  padding: 10px 14px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 800;
+}
+
+.button:focus-visible {
+  outline: 3px solid #8bd3ff;
+  outline-offset: 2px;
+}
+
+.button--primary {
+  background: #0f5d8f;
+  color: #ffffff;
+}
+
+.button--primary:hover {
+  background: #0a4e7b;
+}
+
+.button--secondary {
+  background: #ffffff;
+  color: #18334f;
+  border-color: #c9d7e6;
+}
+
+.button--secondary:hover {
+  background: #edf5fc;
+}

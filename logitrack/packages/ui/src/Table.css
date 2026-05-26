@@ -1,0 +1,97 @@
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid #d8e4ee;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  color: #102033;
+  font-size: 0.9rem;
+}
+
+.table th {
+  background: #f3f7fb;
+  color: #526579;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.table th,
+.table td {
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid #e5edf4;
+  vertical-align: top;
+  white-space: nowrap;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.table tbody tr:hover {
+  background: #f8fbfd;
+}
+
+.table-wrapper--virtualized {
+  max-height: 560px;
+  overflow: auto;
+}
+
+.table--virtualized {
+  position: relative;
+}
+
+.table--virtualized thead {
+  position: sticky;
+  z-index: 2;
+  top: 0;
+}
+
+.table--virtualized tbody {
+  position: relative;
+  display: block;
+}
+
+.table--virtualized thead,
+.table--virtualized tbody tr {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
+
+.table--virtualized tbody tr {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.table__cell--left {
+  text-align: left;
+}
+
+.table__cell--right {
+  text-align: right;
+}
+
+.table__cell--center {
+  text-align: center;
+}
+
+.table-empty {
+  display: grid;
+  min-height: 140px;
+  place-items: center;
+  border: 1px dashed #c7d7e4;
+  border-radius: 8px;
+  background: #f8fbfd;
+  color: #526579;
+  font-weight: 700;
+  text-align: center;
+}
