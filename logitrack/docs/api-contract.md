@@ -1,24 +1,47 @@
 # API Contract
 
-This document defines the first frontend-facing API contract for LogiTrack Control Tower. Phase 2 can implement these shapes as typed mock JSON before the backend exists.
-
-The contract is intentionally small. Dashboard Overview, Delivery Tracking, and Alert Center are the first priority screens.
+This document describes the current LogiTrack backend contract used by the shell and runtime remote apps. The active backend exposes REST endpoints under `/api`, Server-Sent Events endpoints for live snapshots, and a Spring GraphQL endpoint for analytics.
 
 ## Conventions
 
-- Base path: `/api`
+- REST base path: `/api`
+- GraphQL path: `/graphql`
 - Response format: JSON
-- Timestamps: ISO 8601 UTC strings
-- Pagination is planned for list endpoints, but Phase 2 mock data can start with simple arrays.
-- Kafka topic contracts are not finalized in Phase 1.
+- Timestamps: ISO 8601 strings
+- List endpoints return `{ items, page, pageSize, totalItems, totalPages }`
+- Frontend default API base URL: `http://localhost:8080`
 
-## Priority Endpoints
+## Error Response
+
+REST errors use the backend `ApiErrorResponse` shape:
+
+```json
+{
+  "error": "Not Found",
+  "message": "Vehicle was not found.",
+  "path": "/api/vehicles/VHL-404",
+  "timestamp": "2026-05-26T09:30:00Z"
+}
+```
+
+GraphQL errors use the standard GraphQL `errors` array:
+
+```json
+{
+  "errors": [
+    {
+      "message": "Validation error",
+      "path": ["deliveryAnalytics"]
+    }
+  ]
+}
+```
+
+## REST Endpoints
 
 ### `GET /api/health`
 
 Returns backend health.
-
-Example response:
 
 ```json
 {
@@ -29,9 +52,7 @@ Example response:
 
 ### `GET /api/dashboard/summary`
 
-Returns KPI values and compact dashboard summaries.
-
-Example response:
+Returns dashboard KPIs, delivery status counts, and recent alerts.
 
 ```json
 {
@@ -43,30 +64,24 @@ Example response:
   "activeAlerts": 6,
   "statusSummary": [
     {
-      "status": "CREATED",
-      "count": 12
-    },
-    {
       "status": "IN_TRANSIT",
       "count": 34
     },
     {
       "status": "DELAYED",
       "count": 9
-    },
-    {
-      "status": "DELIVERED",
-      "count": 73
     }
   ],
   "recentAlerts": [
     {
       "id": "ALT-9001",
-      "severity": "HIGH",
       "alertType": "DELIVERY_DELAY",
+      "severity": "HIGH",
+      "status": "OPEN",
       "message": "Delivery DLV-5018 is delayed by 17 minutes.",
       "deliveryId": "DLV-5018",
       "vehicleId": "VHL-018",
+      "region": "Ankara-Cankaya",
       "createdAt": "2026-05-20T21:15:30Z",
       "resolvedAt": null
     }
@@ -76,17 +91,15 @@ Example response:
 
 ### `GET /api/deliveries`
 
-Returns deliveries for the Delivery Tracking screen.
+Returns paginated deliveries for Delivery Management.
 
-Planned query parameters:
+Query parameters:
 
 - `status`
 - `region`
 - `priority`
 - `page`
 - `pageSize`
-
-Example response:
 
 ```json
 {
@@ -124,17 +137,15 @@ Example response:
 
 ### `GET /api/alerts`
 
-Returns alerts for the Alert Center.
+Returns paginated alerts for Alert Center.
 
-Planned query parameters:
+Query parameters:
 
 - `severity`
 - `resolved`
 - `alertType`
 - `page`
 - `pageSize`
-
-Example response:
 
 ```json
 {
@@ -143,22 +154,12 @@ Example response:
       "id": "ALT-9001",
       "alertType": "DELIVERY_DELAY",
       "severity": "HIGH",
+      "status": "OPEN",
       "message": "Delivery DLV-5018 is delayed by 17 minutes.",
       "deliveryId": "DLV-5018",
       "vehicleId": "VHL-018",
       "region": "Ankara-Cankaya",
       "createdAt": "2026-05-20T21:15:30Z",
-      "resolvedAt": null
-    },
-    {
-      "id": "ALT-9002",
-      "alertType": "VEHICLE_OFFLINE",
-      "severity": "CRITICAL",
-      "message": "Vehicle VHL-027 has not reported location for 12 minutes.",
-      "deliveryId": null,
-      "vehicleId": "VHL-027",
-      "region": "Istanbul-Kadikoy",
-      "createdAt": "2026-05-20T21:19:00Z",
       "resolvedAt": null
     }
   ],
@@ -169,53 +170,35 @@ Example response:
 }
 ```
 
-List endpoints use `page=1`, `pageSize=10`, and max `pageSize=100` by default.
+### `PATCH /api/alerts/{id}/resolve`
 
-## Second-Wave Endpoints
+Marks an alert as resolved and returns the updated alert.
 
-These endpoints are planned after the first three screens are usable.
+```json
+{
+  "id": "ALT-9001",
+  "alertType": "DELIVERY_DELAY",
+  "severity": "HIGH",
+  "status": "RESOLVED",
+  "message": "Delivery DLV-5018 is delayed by 17 minutes.",
+  "deliveryId": "DLV-5018",
+  "vehicleId": "VHL-018",
+  "region": "Ankara-Cankaya",
+  "createdAt": "2026-05-20T21:15:30Z",
+  "resolvedAt": "2026-05-26T09:30:00Z"
+}
+```
 
 ### `GET /api/vehicles`
 
-Supports Fleet Map and vehicle status views.
+Returns paginated vehicles for Fleet Map.
 
-Planned query parameters:
+Query parameters:
 
 - `status`
 - `region`
 - `page`
 - `pageSize`
-
-Example item shape:
-
-```json
-{
-  "id": "VHL-001",
-  "plate": "06 LGT 001",
-  "type": "Box Truck",
-  "capacity": 1200,
-  "status": "ACTIVE",
-  "currentDriver": {
-    "id": "DRV-001",
-    "name": "Ayse Demir"
-  },
-  "lastLatitude": 39.9334,
-  "lastLongitude": 32.8597,
-  "lastSeenAt": "2026-05-25T12:00:00Z"
-}
-```
-
-### `GET /api/vehicles/{id}`
-
-Supports the Fleet Vehicle Detail route at `/fleet/vehicles/:id`. The response uses the same vehicle shape as the list item.
-
-### `GET /api/live/vehicles`
-
-Streams live Fleet Map snapshots as Server-Sent Events. Each event uses the same paginated response shape as `GET /api/vehicles`.
-
-The stream is backed by PostgreSQL vehicle rows. Simulator `vehicle.location.updated` events are persisted by the stream consumer, then the backend emits the latest vehicle snapshots over SSE. Frontend markers throttle and batch these events before updating the map cache.
-
-Example event data:
 
 ```json
 {
@@ -242,28 +225,36 @@ Example event data:
 }
 ```
 
-### `GET /api/metrics/history`
+### `GET /api/vehicles/{id}`
 
-Supports later analytics charts.
+Returns a single vehicle for `/fleet/vehicles/:id`.
 
-Planned query parameters:
-
-- `from`
-- `to`
-- `region`
-- `metric`
+```json
+{
+  "id": "VHL-001",
+  "plate": "06 LGT 001",
+  "type": "Box Truck",
+  "capacity": 1200,
+  "status": "ACTIVE",
+  "currentDriver": {
+    "id": "DRV-001",
+    "name": "Ayse Demir"
+  },
+  "lastLatitude": 39.9334,
+  "lastLongitude": 32.8597,
+  "lastSeenAt": "2026-05-25T12:00:00Z"
+}
+```
 
 ### `GET /api/analytics/summary`
 
-Returns Phase 5 historical analytics from backend aggregation queries.
+Returns REST analytics aggregation. This endpoint remains available for smoke checks and backwards compatibility while the Analytics remote uses GraphQL.
 
-Planned query parameters:
+Query parameters:
 
 - `from`
 - `to`
 - `region`
-
-Example response:
 
 ```json
 {
@@ -313,124 +304,127 @@ Example response:
 }
 ```
 
+## SSE Endpoints
+
+SSE endpoints emit JSON snapshot events through `EventSource`.
+
+### `GET /api/live/dashboard`
+
+Streams the same shape as `GET /api/dashboard/summary`.
+
+### `GET /api/live/alerts`
+
+Streams the same paginated alert list shape as `GET /api/alerts`.
+
+### `GET /api/live/vehicles`
+
+Streams the same paginated vehicle list shape as `GET /api/vehicles`.
+
+The Fleet Map buffers vehicle snapshot events before writing to TanStack Query cache so marker movement does not trigger a render for every incoming event.
+
+Example event payload:
+
+```json
+{
+  "items": [
+    {
+      "id": "VHL-001",
+      "plate": "06 LGT 001",
+      "type": "Box Truck",
+      "capacity": 1200,
+      "status": "ACTIVE",
+      "currentDriver": {
+        "id": "DRV-001",
+        "name": "Ayse Demir"
+      },
+      "lastLatitude": 39.934,
+      "lastLongitude": 32.861,
+      "lastSeenAt": "2026-05-26T09:30:00Z"
+    }
+  ],
+  "page": 1,
+  "pageSize": 100,
+  "totalItems": 1,
+  "totalPages": 1
+}
+```
+
+## GraphQL Contract
+
 ### `POST /graphql`
 
-Phase 11 adds a Spring GraphQL analytics query while keeping the REST analytics endpoint active.
+The Analytics remote calls `deliveryAnalytics(from, to, region)`.
 
-Query:
+Request:
 
-```graphql
-query DeliveryAnalytics($from: String, $to: String, $region: String) {
-  deliveryAnalytics(from: $from, to: $to, region: $region) {
-    summary {
-      totalDeliveries
-      delayedDeliveries
-      averageDelayMinutes
-      onTimeRate
-    }
-    delayTrend {
-      date
-      totalDeliveries
-      delayedDeliveries
-      averageDelayMinutes
-    }
-    regionBreakdown {
-      region
-      totalDeliveries
-      delayedDeliveries
-      averageDelayMinutes
-      delayRate
-    }
-    driverPerformance {
-      driverId
-      driverName
-      totalDeliveries
-      delayedDeliveries
-      averageDelayMinutes
-      onTimeRate
-    }
-    vehiclePerformance {
-      vehicleId
-      plate
-      totalDeliveries
-      delayedDeliveries
-      averageDelayMinutes
-      onTimeRate
+```json
+{
+  "query": "query DeliveryAnalytics($from: String, $to: String, $region: String) { deliveryAnalytics(from: $from, to: $to, region: $region) { summary { totalDeliveries delayedDeliveries averageDelayMinutes onTimeRate } delayTrend { date totalDeliveries delayedDeliveries averageDelayMinutes } regionBreakdown { region totalDeliveries delayedDeliveries averageDelayMinutes delayRate } driverPerformance { driverId driverName totalDeliveries delayedDeliveries averageDelayMinutes onTimeRate } vehiclePerformance { vehicleId plate totalDeliveries delayedDeliveries averageDelayMinutes onTimeRate } } }",
+  "variables": {
+    "from": "2026-05-01",
+    "to": "2026-05-25",
+    "region": "Ankara"
+  }
+}
+```
+
+Response:
+
+```json
+{
+  "data": {
+    "deliveryAnalytics": {
+      "summary": {
+        "totalDeliveries": 120,
+        "delayedDeliveries": 18,
+        "averageDelayMinutes": 14.6,
+        "onTimeRate": 85.0
+      },
+      "delayTrend": [
+        {
+          "date": "2026-05-20",
+          "totalDeliveries": 30,
+          "delayedDeliveries": 5,
+          "averageDelayMinutes": 12.4
+        }
+      ],
+      "regionBreakdown": [
+        {
+          "region": "Ankara-Cankaya",
+          "totalDeliveries": 40,
+          "delayedDeliveries": 8,
+          "averageDelayMinutes": 16.2,
+          "delayRate": 20.0
+        }
+      ],
+      "driverPerformance": [
+        {
+          "driverId": "DRV-001",
+          "driverName": "Ayse Demir",
+          "totalDeliveries": 32,
+          "delayedDeliveries": 3,
+          "averageDelayMinutes": 8.5,
+          "onTimeRate": 90.6
+        }
+      ],
+      "vehiclePerformance": [
+        {
+          "vehicleId": "VHL-101",
+          "plate": "06 ABC 123",
+          "totalDeliveries": 28,
+          "delayedDeliveries": 4,
+          "averageDelayMinutes": 11.3,
+          "onTimeRate": 85.7
+        }
+      ]
     }
   }
 }
 ```
 
-The Analytics remote consumes this query for the Plotly delay trend, D3 region heatmap, driver/vehicle performance tables, and route efficiency dashboard.
+Smoke scenarios:
 
-## Live Update Event Shapes
-
-Phase 2 can simulate these through SSE or WebSocket messages. Kafka transport details are intentionally deferred.
-
-### Vehicle Location Update
-
-```json
-{
-  "eventType": "vehicle.location.updated",
-  "vehicleId": "VHL-102",
-  "latitude": 39.9208,
-  "longitude": 32.8541,
-  "speed": 48,
-  "status": "ON_DELIVERY",
-  "fuelLevel": 72,
-  "timestamp": "2026-05-20T21:10:00Z"
-}
-```
-
-### Delivery Status Changed
-
-```json
-{
-  "eventType": "delivery.status.changed",
-  "deliveryId": "DLV-5012",
-  "oldStatus": "IN_TRANSIT",
-  "newStatus": "DELIVERED",
-  "timestamp": "2026-05-20T21:12:00Z"
-}
-```
-
-### Delivery Delayed
-
-```json
-{
-  "eventType": "delivery.delayed",
-  "deliveryId": "DLV-5018",
-  "vehicleId": "VHL-018",
-  "region": "Ankara-Cankaya",
-  "delayMinutes": 17,
-  "severity": "HIGH",
-  "timestamp": "2026-05-20T21:15:00Z"
-}
-```
-
-### Alert Created
-
-```json
-{
-  "eventType": "alert.created",
-  "alertId": "ALT-9001",
-  "deliveryId": "DLV-5018",
-  "vehicleId": "VHL-018",
-  "alertType": "DELIVERY_DELAY",
-  "severity": "HIGH",
-  "message": "Delivery DLV-5018 is delayed by 17 minutes.",
-  "timestamp": "2026-05-20T21:15:30Z"
-}
-```
-
-## Frontend Mock Data Guidance
-
-Phase 2 mock data should follow these response shapes closely. That will make the later backend integration mostly a data-source change instead of a UI rewrite.
-
-Recommended first mock files when Phase 2 starts:
-
-- `dashboardSummary`
-- `deliveries`
-- `alerts`
-
-Vehicles can be added when Fleet Map becomes active.
+- no variables
+- `region`
+- `from` + `to`
+- `from` + `to` + `region`

@@ -1,53 +1,137 @@
 # Data Quality
 
-LogiTrack keeps deterministic demo data for the live pipeline and adds Kaggle historical CSV import in Phase 9. The two paths share the same PostgreSQL schema so REST analytics can read seed, simulator, and imported historical records through one API.
+LogiTrack uses deterministic seed data, live simulator events, and a Kaggle-compatible historical import path. All three paths target the same PostgreSQL schema so dashboard, fleet, REST analytics, GraphQL analytics, and Streamlit panels can read a common operational model.
 
-## Runtime Sources
+## Source Status
 
-| Source | Purpose | Status |
-|---|---|---|
-| PostgreSQL seed SQL | Initial vehicles, drivers, warehouses, deliveries, alerts, and location history | Active |
-| Python data simulator | Realtime logistics events for location, delivery status, delay, and alert flows | Active |
-| Redpanda/Kafka-compatible topics | Event transport between simulator and consumer | Active |
-| Kaggle logistics CSV | Historical enrichment for analytics | Active Phase 9 path |
-| OpenStreetMap/Overpass | Map context and warehouse/destination enrichment | Scheduled for Phase 10 where needed |
+| Source | Purpose | Status | Evidence |
+|---|---|---|---|
+| PostgreSQL seed SQL | Initial demo vehicles, drivers, warehouses, deliveries, alerts, and locations | Active | `database/seed/001_seed_demo_data.sql` |
+| Python data simulator | Realtime location, status, delay, and alert events | Active | `services/data-simulator` |
+| Redpanda/Kafka-compatible topics | Event transport between simulator and consumer | Active | `docker-compose.yml` |
+| Python stream consumer | Persists simulator events into PostgreSQL | Active | `services/stream-consumer` |
+| Kaggle historical CSV | Higher-volume historical analytics data | Importer implemented, large import evidence pending | `scripts/import_historical_data.py` |
+| OpenStreetMap tiles | Fleet Map visual context | Active | React Leaflet tile layer |
+| OpenStreetMap/Overpass enrichment | Warehouse/destination enrichment | Planned | Not part of current verified dataset |
 
-## Normalization
+## Kaggle Import Status
 
-- IDs are stable strings so frontend route and table state remain predictable.
-- Timestamps use ISO-compatible values and are stored by PostgreSQL/Spring Boot as offset date-time values.
-- Vehicle coordinates are stored on the current vehicle row and copied into `vehicle_location_events` for history.
-- Delivery status, priority, alert severity, and vehicle status are enum-backed values in the backend and TypeScript types.
+The repository includes:
 
-## Synthetic Fields
+- A sample CSV fixture: `data/sample/historical_deliveries_sample.csv`
+- An idempotent importer: `scripts/import_historical_data.py`
+- A data quality checker: `scripts/check_data_quality.py`
+- Processed-output support under `data/processed/`
 
-Some operational fields are intentionally synthetic: vehicle plates, driver names, warehouse records, route regions, priorities, alert messages, delay values, and sample coordinates. They support a realistic control tower demo rather than represent a real carrier dataset.
+The repository does not include raw Kaggle CSV files. Download raw files into `data/raw/` locally.
 
-## Phase 9 Quality Checks
+Phase 9 is not complete until a local Kaggle CSV import proves:
 
-Historical imports are validated with:
+- At least 5,000 historical delivery rows in PostgreSQL.
+- Re-running the import does not create duplicate delivery tracking numbers.
+- `scripts/check_data_quality.py` exits successfully with zero critical failures.
+- Analytics endpoints return imported records.
+
+## Import Commands
+
+Dry-run with committed sample data:
 
 ```bash
 python scripts/import_historical_data.py --csv data/sample/historical_deliveries_sample.csv --dry-run
-python scripts/import_historical_data.py --csv data/sample/historical_deliveries_sample.csv
+```
+
+Import local raw Kaggle data:
+
+```bash
+python scripts/import_historical_data.py --csv data/raw/<kaggle-file>.csv
+```
+
+Run quality checks:
+
+```bash
 python scripts/check_data_quality.py
 ```
 
-The quality script checks:
+## Quality Checks
 
-- Duplicate delivery tracking numbers
-- Missing delivery region or status values
-- Delivery to vehicle/driver foreign-key orphans
-- Negative delay minutes
-- Vehicle rows without coordinates
-- Date range and status distribution overview
+The quality script currently checks:
 
-Critical checks must return zero failures before Phase 9 can be marked complete. Warning checks are allowed only when the README or final verification document explains why the data is still safe for the demo.
+| Check | Severity | Purpose |
+|---|---|---|
+| Duplicate delivery tracking numbers | Critical | Prevent duplicate imported deliveries |
+| Missing delivery region | Critical | Ensure analytics/filtering can group rows |
+| Missing delivery timestamp | Critical | Ensure analytics can filter and trend deliveries |
+| Missing delivery status | Critical | Ensure dashboard and tables can classify deliveries |
+| Invalid delivery status | Critical | Ensure imported rows match backend enum values |
+| Delivery vehicle foreign-key orphans | Critical | Ensure deliveries point to real vehicles |
+| Delivery driver foreign-key orphans | Critical | Ensure deliveries point to real drivers |
+| Negative delay minutes | Critical | Prevent invalid delay metrics |
+| Missing vehicle coordinates | Warning | Identify rows that cannot appear on Fleet Map |
+| Invalid vehicle coordinates | Critical | Prevent latitude/longitude values outside valid ranges |
+| Date range overview | Informational | Confirm source data time span |
+| Status distribution overview | Informational | Confirm imported statuses are plausible |
+
+The script exposes duplicate delivery ID, duplicate tracking number, missing timestamp, invalid status, missing region, invalid coordinates, and negative delay checks as separate rows.
+
+## Normalization Rules
+
+- Source IDs are converted into deterministic IDs with stable prefixes such as `DLV`, `DRV`, `VHL`, `WH`, and `REG`.
+- Dates are parsed from common ISO, day-first, and month-first formats, then normalized to timezone-aware timestamps.
+- Delivery statuses are mapped into LogiTrack enum values: `CREATED`, `ASSIGNED`, `IN_TRANSIT`, `DELAYED`, `DELIVERED`, `CANCELLED`.
+- Priorities are mapped into `LOW`, `NORMAL`, `HIGH`, and `URGENT`.
+- Delay minutes are clamped to zero or greater.
+- Missing coordinates default to Istanbul-centered sample coordinates unless a source column provides a location.
+
+## Kaggle Column Mapping
+
+The importer accepts multiple aliases so it can work with the selected primary dataset or fallback CSV.
+
+| LogiTrack entity/field | Source aliases |
+|---|---|
+| Delivery source key | `order_id`, `shipment_id`, `delivery_id`, `tracking_number`, `tracking_id`, `id` |
+| Tracking number | `tracking_number`, `tracking_id`, `shipment_id` |
+| City | `city`, `destination_city`, `region`, `delivery_city` |
+| District | `district`, `destination_district`, `area`, `zone` |
+| Estimated delivery time | `estimated_delivery_time`, `estimated_arrival`, `eta`, `planned_delivery_time`, `delivery_date` |
+| Actual delivery time | `actual_delivery_time`, `delivered_at`, `actual_arrival`, `delivery_completed_at` |
+| Delay minutes | `delay_minutes`, `delay`, `late_minutes` |
+| Latitude | `latitude`, `lat`, `last_latitude`, `destination_latitude` |
+| Longitude | `longitude`, `lng`, `lon`, `last_longitude`, `destination_longitude` |
+| Driver | `driver_name`, `driver`, `courier_name` |
+| Driver phone | `driver_phone`, `phone` |
+| Driver rating | `driver_rating`, `rating` |
+| Vehicle plate | `vehicle_plate`, `plate`, `truck_id`, `vehicle_id` |
+| Vehicle type | `vehicle_type`, `truck_type`, `vehicle_category` |
+| Vehicle capacity | `vehicle_capacity`, `capacity` |
+| Delivery status | `status`, `delivery_status` |
+| Priority | `priority`, `shipment_priority` |
+| Risk score | `risk_score`, `risk` |
+
+## Synthetic Fields
+
+The importer generates safe synthetic values when a source file does not include every operational field:
+
+- Driver names and IDs
+- Vehicle plates and IDs
+- Warehouse names and coordinates
+- Region IDs
+- Driver ratings
+- Vehicle capacity
+- Delivery priority
+- Risk score
+- Current vehicle status
+- Last update timestamp
+
+Synthetic values are deterministic where possible so repeated imports remain stable.
+
+## Ignored Columns
+
+Columns outside the alias list are ignored by the importer. This keeps the import path tolerant of Kaggle dataset variation and avoids overfitting the schema to one CSV export.
 
 ## Current Limitations
 
-- Kaggle raw CSV files are not committed to Git; developers download them into `data/raw/`.
-- The committed sample fixture proves the import path but does not satisfy the 5k-row acceptance gate by itself.
-- Map enrichment is limited to stored vehicle coordinates and OpenStreetMap tile rendering.
-- The simulator is not a production GPS or IoT stream.
-- Fleet live updates use bounded snapshot polling in the frontend until Phase 10 adds a dedicated vehicle SSE stream.
+- 5k+ Kaggle import evidence is pending.
+- Raw Kaggle files are not committed to Git.
+- The current quality checker covers the requested critical checks, but its output still needs to be captured after a real 5k+ import.
+- The simulator is not a production GPS/IoT stream.
+- Real company logistics data is not used.
