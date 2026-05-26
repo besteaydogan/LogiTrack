@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type CSSProperties, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { interpolateYlOrRd, scaleSequential } from 'd3';
 import Plot from 'react-plotly.js';
@@ -200,7 +200,7 @@ export function AnalyticsPage() {
               </div>
             </AnalyticsSection>
 
-            <AnalyticsSection title="D3 region heatmap" description="Delay-rate heatmap rendered from backend regionBreakdown data.">
+            <AnalyticsSection title="D3 region heatmap" description="Regional delay severity, volume, delayed count, and average delay from backend regionBreakdown data.">
               <RegionHeatmap regions={regionChartData} />
             </AnalyticsSection>
           </div>
@@ -255,27 +255,84 @@ export function AnalyticsPage() {
 
 function RegionHeatmap({ regions }: { regions: RegionBreakdownItem[] }) {
   const maxDelayRate = Math.max(1, ...regions.map((region) => region.delayRate));
+  const maxDeliveries = Math.max(1, ...regions.map((region) => region.totalDeliveries));
+  const sortedRegions = [...regions].sort((first, second) => second.delayRate - first.delayRate || second.totalDeliveries - first.totalDeliveries);
   const color = scaleSequential([0, maxDelayRate], interpolateYlOrRd);
+  const criticalRegions = regions.filter((region) => region.delayRate >= 45).length;
+  const averageDelayRate = average(regions.map((region) => region.delayRate));
 
   if (regions.length === 0) {
     return <StateMessage title="No heatmap data" description="No region data matches the current filters." />;
   }
 
   return (
-    <div className="region-heatmap" aria-label="D3 region delay heatmap">
-      {regions.map((region) => (
-        <div
-          className="region-heatmap__cell"
-          key={region.region}
-          style={{ backgroundColor: color(region.delayRate) }}
-          title={`${region.region}: ${numberFormatter.format(region.delayRate)}% delay rate`}
-        >
-          <strong>{region.region}</strong>
-          <span>{numberFormatter.format(region.delayRate)}%</span>
-        </div>
-      ))}
+    <div className="region-heatmap-panel">
+      <div className="region-heatmap-summary" aria-label="Region heatmap summary">
+        <AnalyticsKpi label="Regions" value={regions.length} />
+        <AnalyticsKpi label="Avg delay rate" value={`${numberFormatter.format(averageDelayRate)}%`} />
+        <AnalyticsKpi label="Critical regions" value={criticalRegions} />
+      </div>
+      <div className="region-heatmap" aria-label="D3 region delay heatmap">
+        {sortedRegions.map((region, index) => {
+          const severity = getRegionSeverity(region.delayRate);
+          const delayWidth = Math.max(4, (region.delayRate / maxDelayRate) * 100);
+          const volumeWidth = Math.max(4, (region.totalDeliveries / maxDeliveries) * 100);
+
+          return (
+            <article
+              className={`region-heatmap__cell region-heatmap__cell--${severity.tone}`}
+              key={region.region}
+              style={{ '--heatmap-color': color(region.delayRate) } as CSSProperties}
+              title={`${region.region}: ${numberFormatter.format(region.delayRate)}% delay rate`}
+            >
+              <div className="region-heatmap__header">
+                <span>#{index + 1}</span>
+                <strong>{region.region}</strong>
+              </div>
+              <div className="region-heatmap__severity">
+                <i />
+                {severity.label}
+              </div>
+              <div className="region-heatmap__rate">
+                <strong>{numberFormatter.format(region.delayRate)}%</strong>
+                <span>delay rate</span>
+              </div>
+              <dl className="region-heatmap__metrics">
+                <div>
+                  <dt>Total</dt>
+                  <dd>{region.totalDeliveries}</dd>
+                </div>
+                <div>
+                  <dt>Delayed</dt>
+                  <dd>{region.delayedDeliveries}</dd>
+                </div>
+                <div>
+                  <dt>Avg delay</dt>
+                  <dd>{numberFormatter.format(region.averageDelayMinutes)}m</dd>
+                </div>
+              </dl>
+              <div className="region-heatmap__bars" aria-hidden="true">
+                <span style={{ width: `${delayWidth}%` }} />
+                <span style={{ width: `${volumeWidth}%` }} />
+              </div>
+            </article>
+          );
+        })}
+      </div>
     </div>
   );
+}
+
+function getRegionSeverity(delayRate: number) {
+  if (delayRate >= 45) {
+    return { label: 'High delay', tone: 'high' };
+  }
+
+  if (delayRate >= 25) {
+    return { label: 'Medium delay', tone: 'medium' };
+  }
+
+  return { label: 'Low delay', tone: 'low' };
 }
 
 function buildRouteEfficiency(vehicles: VehiclePerformanceItem[]): RouteEfficiencyItem[] {
@@ -311,7 +368,7 @@ function AnalyticsKpi({ label, value }: { label: string; value: string | number 
   );
 }
 
-function AnalyticsSection({ children, description, title }: { children: React.ReactNode; description: string; title: string }) {
+function AnalyticsSection({ children, description, title }: { children: ReactNode; description: string; title: string }) {
   return (
     <Card className="analytics-section">
       <h3>{title}</h3>
@@ -321,7 +378,7 @@ function AnalyticsSection({ children, description, title }: { children: React.Re
   );
 }
 
-function AnalyticsTableSection({ actions, children, description, title }: { actions: React.ReactNode; children: React.ReactNode; description: string; title: string }) {
+function AnalyticsTableSection({ actions, children, description, title }: { actions: ReactNode; children: ReactNode; description: string; title: string }) {
   return (
     <section className="analytics-table-section">
       <div className="analytics-table-section__header">
