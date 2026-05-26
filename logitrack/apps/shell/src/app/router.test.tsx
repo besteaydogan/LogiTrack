@@ -46,6 +46,20 @@ describe('router', () => {
     expect(await screen.findByText('Fleet remote route')).toBeInTheDocument();
   });
 
+  it('exposes the fleet 3d route through lazy loading', async () => {
+    const router = createMemoryRouter(appRoutes, { initialEntries: ['/fleet/3d'] });
+    const queryClient = new QueryClient();
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>,
+    );
+
+    expect(screen.getByText('Loading page')).toBeInTheDocument();
+    expect(await screen.findByTitle('3D Fleet Operations View')).toBeInTheDocument();
+  });
+
   it('exposes the delivery management route through lazy loading', async () => {
     const router = createMemoryRouter(appRoutes, { initialEntries: ['/deliveries'] });
     const queryClient = new QueryClient();

@@ -1,0 +1,19 @@
+.fleet-3d-frame-page {
+  display: grid;
+  gap: 12px;
+  min-height: calc(100vh - 170px);
+}
+
+.fleet-3d-frame-page__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.fleet-3d-frame-page__frame {
+  display: block;
+  width: 100%;
+  min-height: calc(100vh - 222px);
+  border: 0;
+  border-radius: 8px;
+  background: #eef4f8;
+}

@@ -7,6 +7,7 @@ import type {
   DeliveryListResponse,
   Vehicle,
   VehicleListResponse,
+  WarehouseListResponse,
 } from '@logitrack/types';
 
 import { apiRequest } from './http';
@@ -18,6 +19,7 @@ export const queryKeys = {
   alertsBySeverity: (severity: string) => ['alerts', severity] as const,
   vehicles: ['vehicles'] as const,
   vehicle: (id: string) => ['vehicles', id] as const,
+  warehouses: ['warehouses'] as const,
   analyticsSummary: (filters: AnalyticsFilters) => [
     'analytics-summary',
     filters.from ?? '',
@@ -36,6 +38,10 @@ export function getVehicles() {
 
 export function getVehicleById(id: string) {
   return apiRequest<Vehicle>(`/api/vehicles/${id}`);
+}
+
+export function getWarehouses() {
+  return apiRequest<WarehouseListResponse>('/api/warehouses');
 }
 
 export function getDeliveries() {

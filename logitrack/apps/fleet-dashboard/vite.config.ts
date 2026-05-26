@@ -12,6 +12,7 @@ export default defineConfig({
       filename: 'remoteEntry.js',
       exposes: {
         './FleetDashboardPage': './src/FleetDashboardPage.tsx',
+        './Fleet3DPage': './src/pages/Fleet3DPage.tsx',
       },
       shared: ['react', 'react-dom', 'react-router-dom', '@tanstack/react-query'],
     }),

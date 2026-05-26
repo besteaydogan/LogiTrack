@@ -23,6 +23,7 @@ export default defineConfig(({ mode }) => ({
         ? {
           'analytics/AnalyticsPage': 'D:/PROJECT/LogiTrack/LogiTrack/logitrack/apps/shell/src/test/AnalyticsRemoteStub.tsx',
           'fleetDashboard/FleetDashboardPage': 'D:/PROJECT/LogiTrack/LogiTrack/logitrack/apps/shell/src/test/FleetDashboardRemoteStub.tsx',
+          'fleetDashboard/Fleet3DPage': 'D:/PROJECT/LogiTrack/LogiTrack/logitrack/apps/shell/src/test/FleetDashboardRemoteStub.tsx',
           'deliveryManagement/DeliveryManagementPage': 'D:/PROJECT/LogiTrack/LogiTrack/logitrack/apps/shell/src/test/DeliveryManagementRemoteStub.tsx',
           'alertCenter/AlertCenterPage': 'D:/PROJECT/LogiTrack/LogiTrack/logitrack/apps/shell/src/test/AlertCenterRemoteStub.tsx',
         }

@@ -6,16 +6,21 @@ type RemotePageBoundaryProps = {
 };
 
 type RemotePageBoundaryState = {
+  errorMessage: string | null;
   hasError: boolean;
 };
 
 export class RemotePageBoundary extends Component<RemotePageBoundaryProps, RemotePageBoundaryState> {
   state: RemotePageBoundaryState = {
+    errorMessage: null,
     hasError: false,
   };
 
-  static getDerivedStateFromError() {
-    return { hasError: true };
+  static getDerivedStateFromError(error: Error) {
+    return {
+      errorMessage: error.message,
+      hasError: true,
+    };
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
@@ -27,7 +32,7 @@ export class RemotePageBoundary extends Component<RemotePageBoundaryProps, Remot
       return (
         <RemoteErrorFallback
           title="Remote view unavailable"
-          description="Start the requested remote app and refresh this route."
+          description={this.state.errorMessage ?? 'Start the requested remote app and refresh this route.'}
         />
       );
     }

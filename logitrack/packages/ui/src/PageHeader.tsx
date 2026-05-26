@@ -9,11 +9,11 @@ type PageHeaderProps = {
   eyebrow?: string;
 };
 
-export function PageHeader({ title, description, actions, eyebrow = 'Phase 2' }: PageHeaderProps) {
+export function PageHeader({ title, description, actions, eyebrow }: PageHeaderProps) {
   return (
     <div className="page-header">
       <div>
-        <p className="page-header__eyebrow">{eyebrow}</p>
+        {eyebrow ? <p className="page-header__eyebrow">{eyebrow}</p> : null}
         <h2>{title}</h2>
         <p>{description}</p>
       </div>

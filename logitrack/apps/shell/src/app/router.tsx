@@ -22,6 +22,9 @@ const AnalyticsPage = lazy(() => import('analytics/AnalyticsPage').then((module)
 const FleetDashboardPage = lazy(() => import('fleetDashboard/FleetDashboardPage').then((module) => ({
   default: module.FleetDashboardPage ?? module.default,
 })));
+const Fleet3DFramePage = lazy(() => import('@/pages/Fleet3DFramePage').then((module) => ({
+  default: module.Fleet3DFramePage,
+})));
 
 export const appRoutes: RouteObject[] = [
   {
@@ -51,6 +54,10 @@ export const appRoutes: RouteObject[] = [
       {
         path: 'fleet',
         element: <RemotePageBoundary><LazyPage><FleetDashboardPage /></LazyPage></RemotePageBoundary>,
+      },
+      {
+        path: 'fleet/3d',
+        element: <LazyPage><Fleet3DFramePage /></LazyPage>,
       },
       {
         path: 'fleet/vehicles/:vehicleId',

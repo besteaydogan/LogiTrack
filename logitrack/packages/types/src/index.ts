@@ -29,6 +29,16 @@ export type WarehouseSummary = {
   name: string;
 };
 
+export type Warehouse = {
+  id: string;
+  name: string;
+  city: string;
+  district: string;
+  latitude: number;
+  longitude: number;
+  capacity: number;
+};
+
 export type Alert = {
   id: string;
   alertType: string;
@@ -103,6 +113,14 @@ export type AlertListResponse = {
 
 export type VehicleListResponse = {
   items: Vehicle[];
+  page: number;
+  pageSize: number;
+  totalItems: number;
+  totalPages: number;
+};
+
+export type WarehouseListResponse = {
+  items: Warehouse[];
   page: number;
   pageSize: number;
   totalItems: number;

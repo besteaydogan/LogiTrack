@@ -119,6 +119,7 @@ function FleetMapPage() {
         eyebrow="Fleet remote"
         title="Fleet Map"
         description="Live vehicle snapshot map from the shared backend API. Simulator location events update PostgreSQL, the backend streams vehicle snapshots over SSE, and markers are throttled before cache writes."
+        actions={<Button variant="secondary" onClick={() => navigate('/fleet/3d')}>3D Operations</Button>}
       />
 
       <section className="fleet-kpis" aria-label="Fleet KPI summary">

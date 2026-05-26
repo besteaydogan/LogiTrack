@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 
 import { FleetDashboardPage } from './FleetDashboardPage';
+import { Fleet3DPage } from './pages/Fleet3DPage';
 import './styles.css';
 
 const queryClient = new QueryClient({
@@ -23,6 +24,7 @@ createRoot(document.getElementById('root')!).render(
           <Routes>
             <Route path="/" element={<FleetDashboardPage />} />
             <Route path="/fleet" element={<FleetDashboardPage />} />
+            <Route path="/fleet/3d" element={<Fleet3DPage />} />
             <Route path="/fleet/vehicles/:vehicleId" element={<FleetDashboardPage />} />
           </Routes>
         </main>

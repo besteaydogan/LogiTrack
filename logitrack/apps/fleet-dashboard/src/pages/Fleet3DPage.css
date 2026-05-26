@@ -1,0 +1,443 @@
+.fleet-3d-page {
+  display: grid;
+  gap: 18px;
+}
+
+.fleet-3d-page--embedded {
+  gap: 12px;
+}
+
+.fleet-3d-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr) minmax(170px, 0.7fr) minmax(120px, auto);
+  gap: 12px;
+  align-items: stretch;
+  border: 1px solid #d8e4ee;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 0.85rem;
+}
+
+.fleet-3d-toolbar__section {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  min-width: 0;
+  border-right: 1px solid #e5edf4;
+  padding-right: 12px;
+}
+
+.fleet-3d-toolbar__section:last-child {
+  border-right: 0;
+  padding-right: 0;
+}
+
+.fleet-3d-toolbar__label {
+  color: #607386;
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.fleet-3d-toolbar__group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+.fleet-3d-chip,
+.fleet-3d-reset {
+  min-height: 34px;
+  border: 1px solid #d8e4ee;
+  border-radius: 8px;
+  background: #f8fbfd;
+  color: #45596b;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 0.45rem 0.7rem;
+}
+
+.fleet-3d-chip--active,
+.fleet-3d-chip--status,
+.fleet-3d-reset {
+  border-color: #2563eb;
+  background: #e8f0ff;
+  color: #1d4ed8;
+}
+
+.fleet-3d-toolbar__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-start;
+  color: #607386;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.fleet-3d-toolbar__section--camera {
+  align-content: stretch;
+}
+
+.fleet-3d-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 310px;
+  gap: 16px;
+  align-items: start;
+}
+
+.fleet-3d-scene-shell,
+.fleet-3d-detail {
+  min-height: 620px;
+  border: 1px solid #d8e4ee;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.fleet-3d-scene-shell {
+  height: 620px;
+  overflow: hidden;
+  position: relative;
+}
+
+.fleet-3d-canvas {
+  width: 100%;
+  height: 620px;
+}
+
+.fleet-3d-legend {
+  position: absolute;
+  z-index: 2;
+  top: 14px;
+  left: 14px;
+  display: grid;
+  gap: 10px;
+  max-width: min(620px, calc(100% - 28px));
+  border: 1px solid #d8e4ee;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.93);
+  padding: 0.75rem;
+  box-shadow: 0 12px 28px rgba(15, 33, 55, 0.12);
+  pointer-events: none;
+}
+
+.fleet-3d-legend h4 {
+  margin: 0 0 6px;
+  color: #102033;
+  font-size: 0.76rem;
+}
+
+.fleet-3d-legend__row-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px 12px;
+}
+
+.fleet-3d-legend__item {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  color: #45596b;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.fleet-3d-legend__item i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+}
+
+.fleet-3d-legend__line {
+  width: 22px !important;
+  height: 4px !important;
+  border-radius: 999px !important;
+}
+
+.fleet-3d-legend__building {
+  width: 12px !important;
+  height: 12px !important;
+  border-radius: 2px !important;
+  background: #334155;
+}
+
+.fleet-3d-legend__pulse {
+  border: 2px solid #dc2626;
+  background: transparent;
+}
+
+.fleet-3d-alert-toasts {
+  position: absolute;
+  z-index: 3;
+  top: 14px;
+  right: 14px;
+  display: grid;
+  gap: 8px;
+  width: min(260px, calc(100% - 28px));
+  pointer-events: none;
+}
+
+.fleet-3d-alert-toast {
+  border: 1px solid #fed7aa;
+  border-left: 5px solid #f59e0b;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.96);
+  padding: 0.7rem 0.75rem;
+  box-shadow: 0 12px 28px rgba(15, 33, 55, 0.16);
+}
+
+.fleet-3d-alert-toast--critical,
+.fleet-3d-alert-toast--high {
+  border-color: #fecaca;
+  border-left-color: #dc2626;
+}
+
+.fleet-3d-alert-toast span {
+  color: #b45309;
+  font-size: 0.68rem;
+  font-weight: 900;
+}
+
+.fleet-3d-alert-toast--critical span,
+.fleet-3d-alert-toast--high span {
+  color: #b91c1c;
+}
+
+.fleet-3d-alert-toast strong,
+.fleet-3d-alert-toast p {
+  display: block;
+  margin: 0;
+}
+
+.fleet-3d-alert-toast strong {
+  margin-top: 3px;
+  color: #102033;
+  font-size: 0.82rem;
+}
+
+.fleet-3d-alert-toast p {
+  margin-top: 2px;
+  color: #607386;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.fleet-3d-detail {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  max-height: 620px;
+  overflow: auto;
+  padding: 1rem;
+}
+
+.fleet-3d-detail__section {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding-top: 4px;
+}
+
+.fleet-3d-detail__section h4 {
+  margin: 0;
+  color: #102033;
+  font-size: 0.8rem;
+  font-weight: 900;
+}
+
+.fleet-3d-detail__badge {
+  justify-self: start;
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 0.7rem;
+  font-weight: 900;
+  padding: 0.22rem 0.55rem;
+  text-transform: uppercase;
+}
+
+.fleet-3d-detail__topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.fleet-3d-detail__topline .button {
+  min-height: 32px;
+  padding: 0.42rem 0.68rem;
+}
+
+.fleet-3d-detail h3,
+.fleet-3d-detail p {
+  margin: 0;
+}
+
+.fleet-3d-detail p {
+  color: #607386;
+  line-height: 1.5;
+}
+
+.fleet-3d-detail__item {
+  display: grid;
+  gap: 4px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e5edf4;
+}
+
+.fleet-3d-detail__item span {
+  color: #607386;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.fleet-3d-detail__item strong {
+  color: #102033;
+  font-size: 0.95rem;
+}
+
+.fleet-3d-detail__summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.fleet-3d-detail__summary-item {
+  min-width: 0;
+  border: 1px solid #d8e4ee;
+  border-radius: 8px;
+  background: #f8fbfd;
+  padding: 0.75rem;
+}
+
+.fleet-3d-detail__summary-item span,
+.fleet-3d-detail__summary-item strong {
+  display: block;
+}
+
+.fleet-3d-detail__summary-item span {
+  color: #607386;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.fleet-3d-detail__summary-item strong {
+  margin-top: 0.3rem;
+  color: #102033;
+  font-size: 1.35rem;
+}
+
+.fleet-3d-detail .fleet-3d-legend,
+.fleet-3d-detail .fleet-3d-alert-toasts {
+  position: static;
+  width: auto;
+  max-width: none;
+  box-shadow: none;
+  pointer-events: auto;
+}
+
+.fleet-3d-detail .fleet-3d-legend {
+  gap: 8px;
+  border-color: #e5edf4;
+  background: #f8fbfd;
+  padding: 0.7rem;
+}
+
+.fleet-3d-detail .fleet-3d-legend h4 {
+  color: #607386;
+  font-size: 0.7rem;
+}
+
+.fleet-3d-detail .fleet-3d-legend__row-wrap {
+  gap: 6px 9px;
+}
+
+.fleet-3d-detail .fleet-3d-legend__item {
+  font-size: 0.68rem;
+}
+
+.fleet-3d-detail .fleet-3d-alert-toasts {
+  gap: 7px;
+}
+
+.fleet-3d-detail .fleet-3d-alert-toast {
+  background: #fffaf3;
+  padding: 0.62rem 0.7rem;
+}
+
+@media (max-width: 1180px) {
+  .fleet-3d-toolbar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .fleet-3d-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .fleet-3d-toolbar__section {
+    border-right: 0;
+    border-bottom: 0;
+    padding-right: 0;
+    padding-bottom: 0;
+  }
+
+  .fleet-3d-toolbar__section:last-child {
+    border-bottom: 0;
+    padding-bottom: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .fleet-3d-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .fleet-3d-toolbar__section {
+    border-bottom: 1px solid #e5edf4;
+    padding-bottom: 10px;
+  }
+
+  .fleet-3d-toolbar__section:last-child {
+    border-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  .fleet-3d-scene-shell,
+  .fleet-3d-detail {
+    min-height: 440px;
+  }
+
+  .fleet-3d-scene-shell {
+    height: 440px;
+  }
+
+  .fleet-3d-detail {
+    max-height: none;
+  }
+
+  .fleet-3d-canvas {
+    height: 440px;
+  }
+
+  .fleet-3d-scene-shell > .fleet-3d-legend {
+    position: static;
+    max-width: none;
+    border-width: 0 0 1px;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .fleet-3d-scene-shell > .fleet-3d-alert-toasts {
+    top: 10px;
+    right: 10px;
+    width: min(220px, calc(100% - 20px));
+  }
+}
