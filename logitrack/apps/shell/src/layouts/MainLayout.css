@@ -1,0 +1,163 @@
+.app-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  background: #eef3f8;
+}
+
+.sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  padding: 24px 18px;
+  background: #102033;
+  color: #f8fafc;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 4px 24px;
+}
+
+.brand__mark {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  background: #38bdf8;
+  color: #082f49;
+  font-weight: 800;
+}
+
+.brand strong,
+.brand span {
+  display: block;
+}
+
+.brand span {
+  margin-top: 2px;
+  color: #bfd0df;
+  font-size: 0.84rem;
+}
+
+.sidebar__nav {
+  display: grid;
+  gap: 8px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: #d7e2ed;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.nav-item:hover,
+.nav-item:focus-visible {
+  background: #1d3550;
+  color: #ffffff;
+  outline: none;
+}
+
+.nav-item--active {
+  background: #e8f7ff;
+  color: #0f2f4a;
+}
+
+.app-frame {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  min-height: 88px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 20px 28px;
+  background: #ffffff;
+  border-bottom: 1px solid #dbe4ee;
+}
+
+.topbar h1 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.topbar__eyebrow {
+  margin: 0 0 4px;
+  color: #5a6b7c;
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.topbar__status {
+  flex: 0 0 auto;
+  padding: 8px 12px;
+  border: 1px solid #c7d6e5;
+  border-radius: 8px;
+  color: #26425d;
+  font-weight: 800;
+}
+
+.content {
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 28px;
+}
+
+@media (max-width: 820px) {
+  .app-shell {
+    display: block;
+  }
+
+  .sidebar {
+    position: static;
+    height: auto;
+    padding: 16px;
+  }
+
+  .brand {
+    padding-bottom: 14px;
+  }
+
+  .sidebar__nav {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .nav-item {
+    justify-content: center;
+  }
+
+  .topbar {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 18px;
+  }
+
+  .content {
+    padding: 18px;
+  }
+}
+
+@media (max-width: 560px) {
+  .sidebar__nav {
+    grid-template-columns: 1fr;
+  }
+
+  .nav-item {
+    justify-content: flex-start;
+  }
+}
