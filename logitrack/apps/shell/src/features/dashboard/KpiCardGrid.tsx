@@ -13,9 +13,9 @@ export function KpiCardGrid({ summary }: KpiCardGridProps) {
   return (
     <div className="kpi-grid">
       <KpiCard
-        label="Total deliveries"
-        value={summary.totalDeliveries}
-        helper="All planned deliveries in the current data window"
+        label="Processed deliveries"
+        value={`${summary.totalDeliveries} / ${summary.totalRecords || summary.totalDeliveries}`}
+        helper="Replay progress in the current live simulation"
         icon={Package}
       />
       <KpiCard

@@ -6,7 +6,7 @@ import './KpiCard.css';
 
 type KpiCardProps = {
   label: string;
-  value: number;
+  value: number | string;
   helper: string;
   icon: LucideIcon;
   tone?: 'default' | 'warning' | 'critical' | 'success';
@@ -20,7 +20,7 @@ export function KpiCard({ label, value, helper, icon: Icon, tone = 'default' }: 
       </div>
       <div>
         <p className="kpi-card__label">{label}</p>
-        <strong>{value.toLocaleString('en-US')}</strong>
+        <strong>{typeof value === 'number' ? value.toLocaleString('en-US') : value}</strong>
         <span>{helper}</span>
       </div>
     </Card>

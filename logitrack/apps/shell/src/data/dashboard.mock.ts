@@ -55,6 +55,9 @@ export const dashboardSummary: DashboardSummaryResponse = {
       resolvedAt: null,
     },
   ],
+  processedRecords: 128,
+  totalRecords: 5000,
+  simulationIntervalSeconds: 5,
 };
 
 export const deliveries: DeliveryListResponse = {
