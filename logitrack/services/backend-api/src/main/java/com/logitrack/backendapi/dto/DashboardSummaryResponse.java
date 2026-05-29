@@ -10,6 +10,9 @@ public record DashboardSummaryResponse(
     long activeVehicles,
     long activeAlerts,
     List<StatusSummaryDto> statusSummary,
-    List<AlertDto> recentAlerts
+    List<AlertDto> recentAlerts,
+    long processedRecords,
+    long totalRecords,
+    int simulationIntervalSeconds
 ) {
 }
