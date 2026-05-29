@@ -1,4 +1,4 @@
-import { AlertTriangle, BarChart3, LayoutDashboard, PackageCheck, Truck } from 'lucide-react';
+import { Activity, AlertTriangle, BarChart3, LayoutDashboard, PackageCheck, Truck } from 'lucide-react';
 import { NavLink, Outlet } from 'react-router-dom';
 
 import './MainLayout.css';
@@ -16,6 +16,7 @@ const navItems: NavItem[] = [
   { to: '/alerts', label: 'Alerts', icon: AlertTriangle },
   { to: '/analytics', label: 'Analytics', icon: BarChart3 },
   { to: '/fleet', label: 'Fleet', icon: Truck },
+  { to: '/simulation', label: 'Simulation', icon: Activity },
 ];
 
 export function MainLayout() {
