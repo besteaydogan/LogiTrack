@@ -6,11 +6,11 @@ import uuid
 from datetime import datetime, timezone
 
 from confluent_kafka import Producer
-from confluent_kafka.admin import AdminClient, NewTopic
 
 
 BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "redpanda:9092")
 INTERVAL_SECONDS = float(os.getenv("SIMULATOR_INTERVAL_SECONDS", "4"))
+MAX_EVENTS = int(os.getenv("SIMULATOR_MAX_EVENTS", "0"))
 
 TOPICS = {
     "vehicle.location.updated": "vehicle-location-updated",
@@ -99,17 +99,8 @@ def alert_event() -> dict:
 EVENT_BUILDERS = [location_event, status_event, delayed_event, alert_event]
 
 
-def ensure_topics() -> None:
-    admin = AdminClient({"bootstrap.servers": BOOTSTRAP_SERVERS})
-    topics = [NewTopic(topic, num_partitions=1, replication_factor=1) for topic in TOPICS.values()]
-    futures = admin.create_topics(topics)
-    for topic, future in futures.items():
-        try:
-            future.result()
-            print(f"created topic {topic}", flush=True)
-        except Exception as exception:
-            if "already exists" not in str(exception).lower():
-                print(f"topic {topic} not created: {exception}", flush=True)
+def event_key(event: dict) -> str | None:
+    return event.get("vehicleId") or event.get("deliveryId") or event.get("alertId")
 
 
 def delivery_report(error, message) -> None:
@@ -120,21 +111,26 @@ def delivery_report(error, message) -> None:
 
 
 def main() -> None:
-    ensure_topics()
     producer = Producer({"bootstrap.servers": BOOTSTRAP_SERVERS})
-    print(f"data simulator connected to {BOOTSTRAP_SERVERS}", flush=True)
+    print(
+        f"data simulator connected to {BOOTSTRAP_SERVERS}; "
+        f"max_events={MAX_EVENTS or 'unlimited'}",
+        flush=True,
+    )
 
-    while True:
+    sent_events = 0
+    while MAX_EVENTS <= 0 or sent_events < MAX_EVENTS:
         event = random.choice(EVENT_BUILDERS)()
         topic = TOPICS[event["eventType"]]
         producer.produce(
             topic,
-            key=event.get("vehicleId") or event.get("deliveryId") or event.get("alertId"),
+            key=event_key(event),
             value=json.dumps(event).encode("utf-8"),
             callback=delivery_report,
         )
         producer.poll(0)
         producer.flush(5)
+        sent_events += 1
         time.sleep(INTERVAL_SECONDS)
 
 
