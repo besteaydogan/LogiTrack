@@ -3,13 +3,16 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import {
   createCoalescedLiveUpdater,
+  createDebouncedInvalidator,
   createLiveEventSource,
   getAlertsBySeverity,
   queryKeys,
   resolveAlert,
+  routeLiveEvent,
+  subscribeToFleetEvents,
 } from '@logitrack/api-client';
-import type { Alert, AlertListResponse, AlertSeverity } from '@logitrack/types';
-import { Badge, Button, PageHeader, StateMessage, Table, type TableColumn } from '@logitrack/ui';
+import type { Alert, AlertListResponse, AlertSeverity, LiveFleetEvent } from '@logitrack/types';
+import { Badge, Button, LiveSimulationBadge, PageHeader, StateMessage, Table, type TableColumn } from '@logitrack/ui';
 
 type SeverityFilter = 'ALL' | AlertSeverity;
 type ConnectionState = 'connecting' | 'connected' | 'reconnecting' | 'disconnected';
@@ -32,6 +35,9 @@ export function AlertCenterPage() {
   const queryClient = useQueryClient();
   const [severity, setSeverity] = useState<SeverityFilter>('ALL');
   const [connectionState, setConnectionState] = useState<ConnectionState>('connecting');
+  const [lastSimulationEvent, setLastSimulationEvent] = useState<LiveFleetEvent | null>(null);
+  const [recentAlertId, setRecentAlertId] = useState<string | null>(null);
+  const [simulationConnectionState, setSimulationConnectionState] = useState<ConnectionState>('connecting');
   const queryKey = queryKeys.alertsBySeverity(severity);
   const { data, error, isLoading, refetch } = useQuery({
     queryKey,
@@ -78,6 +84,52 @@ export function AlertCenterPage() {
     };
   }, [queryClient, severity]);
 
+  useEffect(() => {
+    const alertsInvalidator = createDebouncedInvalidator(() => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.alerts });
+      void queryClient.invalidateQueries({ queryKey });
+    }, 750);
+    const dashboardInvalidator = createDebouncedInvalidator(() => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.dashboardSummary });
+    }, 750);
+
+    const unsubscribe = subscribeToFleetEvents({
+      onError: () => setSimulationConnectionState((current) => (current === 'connected' ? 'reconnecting' : 'disconnected')),
+      onMessage: (event) => {
+        setLastSimulationEvent(event);
+        const route = routeLiveEvent(event);
+
+        if (route.targets.includes('alerts')) {
+          alertsInvalidator.schedule();
+        }
+
+        if (route.targets.includes('dashboardSummary')) {
+          dashboardInvalidator.schedule();
+        }
+
+        if (event.eventType === 'alert.created') {
+          setRecentAlertId(event.alertId);
+        }
+      },
+      onOpen: () => setSimulationConnectionState('connected'),
+    });
+
+    return () => {
+      alertsInvalidator.dispose();
+      dashboardInvalidator.dispose();
+      unsubscribe();
+    };
+  }, [queryClient, queryKey]);
+
+  useEffect(() => {
+    if (!recentAlertId) {
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => setRecentAlertId(null), 5000);
+    return () => window.clearTimeout(timeoutId);
+  }, [recentAlertId]);
+
   const columns = useMemo<TableColumn<Alert>[]>(() => [
     {
       key: 'severity',
@@ -102,7 +154,11 @@ export function AlertCenterPage() {
     {
       key: 'message',
       header: 'Message',
-      render: (alert) => alert.message,
+      render: (alert) => (
+        <span className={alert.id === recentAlertId ? 'alert-row-highlight' : undefined}>
+          {alert.message}
+        </span>
+      ),
     },
     {
       key: 'createdAt',
@@ -126,7 +182,7 @@ export function AlertCenterPage() {
         </Button>
       ),
     },
-  ], [resolveMutation]);
+  ], [recentAlertId, resolveMutation]);
 
   if (isLoading) {
     return (
@@ -154,6 +210,7 @@ export function AlertCenterPage() {
         description={`${data.totalItems} alerts from the backend API. Live: ${connectionState}.`}
         actions={
           <div className="alert-filter" aria-label="Alert severity filter">
+            <LiveSimulationBadge connectionState={simulationConnectionState} lastEvent={lastSimulationEvent} />
             {severityOptions.map((option) => (
               <Button
                 key={option}
