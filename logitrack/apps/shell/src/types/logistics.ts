@@ -16,6 +16,7 @@ export type {
   DriverSummary,
   LiveFleetEvent,
   RegionBreakdownItem,
+  ServerMetricsMessage,
   StatusSummaryItem,
   Vehicle,
   VehicleListResponse,

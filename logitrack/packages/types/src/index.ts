@@ -253,3 +253,15 @@ export type LiveFleetEvent =
   | DeliveryStatusChangedEvent
   | DeliveryDelayedEvent
   | AlertCreatedEvent;
+
+export type ServerMetricsMessage = {
+  type: 'server.metrics';
+  timestamp: string;
+  cpuUsagePercent: number;
+  memoryUsedBytes: number;
+  memoryMaxBytes: number;
+  memoryUsagePercent: number;
+  liveThreads: number;
+  uptimeSeconds: number;
+  sequence: number;
+};

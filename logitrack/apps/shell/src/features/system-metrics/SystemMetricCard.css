@@ -1,0 +1,58 @@
+.system-metric-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 14px;
+  min-height: 124px;
+}
+
+.system-metric-card__icon {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: 8px;
+  color: #0f6b5f;
+  background: #dff7f1;
+}
+
+.system-metric-card p,
+.system-metric-card span {
+  margin: 0;
+}
+
+.system-metric-card p {
+  color: #64748b;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.system-metric-card strong {
+  display: block;
+  margin-top: 6px;
+  color: #0f172a;
+  font-size: 1.85rem;
+  line-height: 1.1;
+}
+
+.system-metric-card span {
+  display: block;
+  margin-top: 7px;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.system-metric-card--warning .system-metric-card__icon {
+  color: #92400e;
+  background: #fef3c7;
+}
+
+.system-metric-card--critical .system-metric-card__icon {
+  color: #b42318;
+  background: #fee4e2;
+}
+
+.system-metric-card--success .system-metric-card__icon {
+  color: #05603a;
+  background: #dcfae6;
+}
