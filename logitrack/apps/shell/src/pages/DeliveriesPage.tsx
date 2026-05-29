@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { StateMessage } from '@/components/ui/StateMessage';
 import { Table, type TableColumn } from '@/components/ui/Table';
+import { useLiveOperationsStream } from '@/features/live-operations/liveOperationsStore';
 import { getDeliveries } from '@/services/api/logisticsApi';
 import { queryKeys } from '@/services/api/queries';
 import type { Delivery } from '@/types/logistics';
@@ -70,6 +71,7 @@ export function DeliveriesPage() {
     queryKey: queryKeys.deliveries,
     queryFn: getDeliveries,
   });
+  const liveState = useLiveOperationsStream({ deliveries: data });
 
   if (isLoading) {
     return (
@@ -97,14 +99,14 @@ export function DeliveriesPage() {
     <>
       <PageHeader
         title="Delivery Tracking"
-        description={`${data.totalItems} delivery records from the backend API.`}
+        description={`Processed deliveries: ${liveState.processedRecords} / ${liveState.totalRecords || data.totalItems}. Live stream: ${liveState.connectionState}.`}
       />
       <Table
         ariaLabel="Delivery records"
         columns={columns}
         emptyMessage="No delivery records are available."
         getRowKey={(delivery) => delivery.id}
-        rows={data.items}
+        rows={liveState.deliveries}
         virtualized
       />
     </>

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { StateMessage } from '@/components/ui/StateMessage';
 import { Table, type TableColumn } from '@/components/ui/Table';
+import { useLiveOperationsStream } from '@/features/live-operations/liveOperationsStore';
 import { createCoalescedLiveUpdater, createLiveEventSource } from '@/services/api/live';
 import { getAlertsBySeverity, resolveAlert } from '@/services/api/logisticsApi';
 import { queryKeys } from '@/services/api/queries';
@@ -37,6 +38,10 @@ export function AlertsPage() {
     queryKey,
     queryFn: () => getAlertsBySeverity(severity),
   });
+  const liveState = useLiveOperationsStream({ alerts: data });
+  const visibleAlerts = severity === 'ALL'
+    ? liveState.alerts
+    : liveState.alerts.filter((alert) => alert.severity === severity);
 
   const resolveMutation = useMutation({
     mutationFn: resolveAlert,
@@ -151,7 +156,7 @@ export function AlertsPage() {
     <>
       <PageHeader
         title="Alert Center"
-        description={`${data.totalItems} alerts from the backend API. Live: ${connectionState}.`}
+        description={`${visibleAlerts.length} live alerts. Live stream: ${liveState.connectionState || connectionState}.`}
         actions={
           <div className="alert-filter" aria-label="Alert severity filter">
             {severityOptions.map((option) => (
@@ -171,7 +176,7 @@ export function AlertsPage() {
         columns={columns}
         emptyMessage="No alerts match the current view."
         getRowKey={(alert) => alert.id}
-        rows={data.items}
+        rows={visibleAlerts}
         virtualized
       />
     </>

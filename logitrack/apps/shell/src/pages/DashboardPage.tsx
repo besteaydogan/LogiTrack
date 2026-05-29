@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
+import { LiveSimulationBadge } from '@logitrack/ui';
 
 import { Button } from '@/components/ui/Button';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -7,49 +7,35 @@ import { StateMessage } from '@/components/ui/StateMessage';
 import { DashboardSection } from '@/features/dashboard/DashboardSection';
 import { DeliveryStatusSummary } from '@/features/dashboard/DeliveryStatusSummary';
 import { KpiCardGrid } from '@/features/dashboard/KpiCardGrid';
+import { LiveEventsOverTime } from '@/features/dashboard/LiveEventsOverTime';
 import { RecentAlerts } from '@/features/dashboard/RecentAlerts';
-import { createCoalescedLiveUpdater, createLiveEventSource } from '@/services/api/live';
+import { RegionLiveSummary } from '@/features/dashboard/RegionLiveSummary';
+import { useLiveOperationsStream } from '@/features/live-operations/liveOperationsStore';
 import { getDashboardSummary } from '@/services/api/logisticsApi';
 import { queryKeys } from '@/services/api/queries';
-import type { DashboardSummaryResponse } from '@/types/logistics';
 
 import './DashboardPage.css';
 
-type ConnectionState = 'connecting' | 'connected' | 'reconnecting' | 'disconnected';
-
 export function DashboardPage() {
-  const queryClient = useQueryClient();
-  const [connectionState, setConnectionState] = useState<ConnectionState>('connecting');
   const { data, error, isLoading, refetch } = useQuery({
     queryKey: queryKeys.dashboardSummary,
     queryFn: getDashboardSummary,
   });
+  const liveState = useLiveOperationsStream({ summary: data });
+  const regionMetrics = liveState.deliveries.reduce<Record<string, { region: string; deliveries: number; delayed: number; alerts: number; events: number }>>((metrics, delivery) => {
+    metrics[delivery.region] ??= { region: delivery.region, deliveries: 0, delayed: 0, alerts: 0, events: 0 };
+    metrics[delivery.region].deliveries += 1;
+    metrics[delivery.region].delayed += delivery.status === 'DELAYED' || delivery.delayMinutes > 0 ? 1 : 0;
+    metrics[delivery.region].events += 1;
+    return metrics;
+  }, {});
 
-  useEffect(() => {
-    const eventSource = createLiveEventSource('/api/live/dashboard');
-    const liveUpdater = createCoalescedLiveUpdater<DashboardSummaryResponse>((summary) => {
-      queryClient.setQueryData(queryKeys.dashboardSummary, summary);
-    });
-
-    eventSource.onopen = () => {
-      setConnectionState('connected');
-    };
-
-    eventSource.onmessage = (event) => {
-      const summary = JSON.parse(event.data) as DashboardSummaryResponse;
-      liveUpdater.push(summary);
-    };
-
-    eventSource.onerror = () => {
-      setConnectionState((current) => (current === 'connected' ? 'reconnecting' : 'disconnected'));
-    };
-
-    return () => {
-      eventSource.close();
-      liveUpdater.dispose();
-      setConnectionState('disconnected');
-    };
-  }, [queryClient]);
+  liveState.alerts.forEach((alert) => {
+    const region = alert.region ?? 'Region pending';
+    regionMetrics[region] ??= { region, deliveries: 0, delayed: 0, alerts: 0, events: 0 };
+    regionMetrics[region].alerts += 1;
+    regionMetrics[region].events += 1;
+  });
 
   if (isLoading) {
     return (
@@ -80,25 +66,44 @@ export function DashboardPage() {
     <div className="dashboard-page">
       <PageHeader
         title="Dashboard Overview"
-        description={`A full-stack control tower view powered by the Spring Boot REST API. Live: ${connectionState}.`}
-        actions={<Button variant="secondary" onClick={() => void refetch()}>Refresh data</Button>}
+        description={`Processed deliveries: ${liveState.processedRecords} / ${liveState.totalRecords || data.totalRecords}. Live stream: ${liveState.connectionState}.`}
+        actions={(
+          <>
+            <LiveSimulationBadge connectionState={liveState.connectionState} lastEvent={liveState.lastEvent} />
+            <Button variant="secondary" onClick={() => void refetch()}>Refresh data</Button>
+          </>
+        )}
       />
 
-      <KpiCardGrid summary={data} />
+      <KpiCardGrid summary={liveState.summary} />
+
+      <DashboardSection
+        title="Live events over time"
+        description="Runtime event volume plotted with current event timestamps."
+      >
+        <LiveEventsOverTime data={liveState.chartPoints} />
+      </DashboardSection>
 
       <div className="dashboard-page__grid">
         <DashboardSection
           title="Delivery status summary"
-          description="One simple Recharts view for operational status distribution."
+          description="Operational status distribution updated by live delivery events."
         >
-          <DeliveryStatusSummary data={data.statusSummary} />
+          <DeliveryStatusSummary data={liveState.summary.statusSummary} />
+        </DashboardSection>
+
+        <DashboardSection
+          title="Region live activity"
+          description="Live event, delay and alert counts by dataset region."
+        >
+          <RegionLiveSummary data={Object.values(regionMetrics)} />
         </DashboardSection>
 
         <DashboardSection
           title="Recent alerts"
-          description="Latest unresolved events surfaced for operations review."
+          description="Latest unresolved alerts surfaced for operations review."
         >
-          <RecentAlerts alerts={data.recentAlerts} />
+          <RecentAlerts alerts={liveState.summary.recentAlerts} />
         </DashboardSection>
       </div>
     </div>
