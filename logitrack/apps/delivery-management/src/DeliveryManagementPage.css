@@ -1,0 +1,13 @@
+.delivery-row-highlight {
+  animation: delivery-row-highlight 5s ease-out;
+}
+
+@keyframes delivery-row-highlight {
+  0% {
+    background: #fff7cc;
+  }
+
+  100% {
+    background: transparent;
+  }
+}

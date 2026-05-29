@@ -1,8 +1,11 @@
-import { useQuery } from '@tanstack/react-query';
+import { useEffect, useMemo, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { getDeliveries, queryKeys } from '@logitrack/api-client';
-import type { Delivery } from '@logitrack/types';
-import { Badge, Button, PageHeader, StateMessage, Table, type TableColumn } from '@logitrack/ui';
+import { createDebouncedInvalidator, getDeliveries, queryKeys, routeLiveEvent, subscribeToFleetEvents } from '@logitrack/api-client';
+import type { Delivery, LiveFleetEvent } from '@logitrack/types';
+import { Badge, Button, LiveSimulationBadge, PageHeader, StateMessage, Table, type TableColumn } from '@logitrack/ui';
+
+import './DeliveryManagementPage.css';
 
 const statusTone: Record<Delivery['status'], 'neutral' | 'info' | 'warning' | 'critical' | 'success'> = {
   CREATED: 'neutral',
@@ -61,10 +64,51 @@ const columns: TableColumn<Delivery>[] = [
 ];
 
 export function DeliveryManagementPage() {
+  const queryClient = useQueryClient();
+  const [lastLiveEvent, setLastLiveEvent] = useState<LiveFleetEvent | null>(null);
+  const [highlightedDeliveryId, setHighlightedDeliveryId] = useState<string | null>(null);
+  const [connectionState, setConnectionState] = useState<'connecting' | 'connected' | 'reconnecting' | 'disconnected'>('connecting');
   const { data, error, isLoading, refetch } = useQuery({
     queryKey: queryKeys.deliveries,
     queryFn: getDeliveries,
   });
+  const rows = useMemo(() => data?.items ?? [], [data?.items]);
+
+  useEffect(() => {
+    const deliveriesInvalidator = createDebouncedInvalidator(() => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.deliveries });
+    }, 750);
+
+    const unsubscribe = subscribeToFleetEvents({
+      onError: () => setConnectionState((current) => (current === 'connected' ? 'reconnecting' : 'disconnected')),
+      onMessage: (event) => {
+        setConnectionState('connected');
+        setLastLiveEvent(event);
+
+        if (routeLiveEvent(event).targets.includes('deliveries')) {
+          deliveriesInvalidator.schedule();
+          if (event.deliveryId) {
+            setHighlightedDeliveryId(event.deliveryId);
+          }
+        }
+      },
+      onOpen: () => setConnectionState('connected'),
+    });
+
+    return () => {
+      deliveriesInvalidator.dispose();
+      unsubscribe();
+    };
+  }, [queryClient]);
+
+  useEffect(() => {
+    if (!highlightedDeliveryId) {
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => setHighlightedDeliveryId(null), 5000);
+    return () => window.clearTimeout(timeoutId);
+  }, [highlightedDeliveryId]);
 
   if (isLoading) {
     return (
@@ -93,13 +137,15 @@ export function DeliveryManagementPage() {
       <PageHeader
         title="Delivery Management"
         description={`${data.totalItems} delivery records from the backend API.`}
+        actions={<LiveSimulationBadge connectionState={connectionState} lastEvent={lastLiveEvent} />}
       />
       <Table
         ariaLabel="Delivery records"
         columns={columns}
         emptyMessage="No delivery records are available."
+        getRowClassName={(delivery) => delivery.id === highlightedDeliveryId ? 'delivery-row-highlight' : undefined}
         getRowKey={(delivery) => delivery.id}
-        rows={data.items}
+        rows={rows}
         virtualized
       />
     </>
