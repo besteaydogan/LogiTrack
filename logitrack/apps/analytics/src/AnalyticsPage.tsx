@@ -1,12 +1,13 @@
-import { useMemo, useState, type CSSProperties, type ReactNode } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { interpolateYlOrRd, scaleSequential } from 'd3';
 import Plot from 'react-plotly.js';
-import { Button, Card, PageHeader, StateMessage, Table, type TableColumn } from '@logitrack/ui';
-import { getAnalyticsSummaryGraphql, queryKeys } from '@logitrack/api-client';
+import { Button, Card, LiveSimulationBadge, PageHeader, StateMessage, Table, type TableColumn } from '@logitrack/ui';
+import { createDebouncedInvalidator, getAnalyticsSummaryGraphql, queryKeys, routeLiveEvent, subscribeToFleetEvents } from '@logitrack/api-client';
 import type {
   AnalyticsFilters,
   DriverPerformanceItem,
+  LiveFleetEvent,
   RegionBreakdownItem,
   VehiclePerformanceItem,
 } from '@logitrack/types';
@@ -94,6 +95,9 @@ const routeEfficiencyColumns: TableColumn<RouteEfficiencyItem>[] = [
 ];
 
 export function AnalyticsPage() {
+  const queryClient = useQueryClient();
+  const [lastLiveEvent, setLastLiveEvent] = useState<LiveFleetEvent | null>(null);
+  const [connectionState, setConnectionState] = useState<'connecting' | 'connected' | 'reconnecting' | 'disconnected'>('connecting');
   const [filters, setFilters] = useState<AnalyticsFilters>({
     from: '2026-05-01',
     to: '2026-05-25',
@@ -111,6 +115,29 @@ export function AnalyticsPage() {
   const delayTrendChartData = useMemo(() => latestWindow(data?.delayTrend ?? [], 50), [data?.delayTrend]);
   const regionChartData = useMemo(() => latestWindow(data?.regionBreakdown ?? [], 50), [data?.regionBreakdown]);
   const routeEfficiency = useMemo(() => buildRouteEfficiency(data?.vehiclePerformance ?? []), [data?.vehiclePerformance]);
+
+  useEffect(() => {
+    const analyticsInvalidator = createDebouncedInvalidator(() => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.analyticsSummary(queryFilters) });
+    }, 1500);
+
+    const unsubscribe = subscribeToFleetEvents({
+      onError: () => setConnectionState((current) => (current === 'connected' ? 'reconnecting' : 'disconnected')),
+      onMessage: (event) => {
+        setConnectionState('connected');
+        setLastLiveEvent(event);
+        if (routeLiveEvent(event).targets.includes('analyticsSummary')) {
+          analyticsInvalidator.schedule();
+        }
+      },
+      onOpen: () => setConnectionState('connected'),
+    });
+
+    return () => {
+      analyticsInvalidator.dispose();
+      unsubscribe();
+    };
+  }, [queryClient, queryFilters]);
 
   if (isLoading) {
     return <StateMessage title="Loading analytics" description="Fetching historical delivery metrics from the backend API." />;
@@ -138,6 +165,7 @@ export function AnalyticsPage() {
         description="Historical delivery aggregation from the Spring Boot GraphQL analytics endpoint."
         actions={
           <div className="analytics-filters" aria-label="Analytics filters">
+            <LiveSimulationBadge connectionState={connectionState} lastEvent={lastLiveEvent} />
             <label>
               From
               <input onChange={(event) => setFilters((current) => ({ ...current, from: event.target.value }))} type="date" value={filters.from} />
