@@ -23,8 +23,8 @@ public class VehicleService {
   public PageResponse<VehicleDto> list(String status, Integer page, Integer pageSize) {
     Pageable pageable = Pagination.pageable(page, pageSize, Sort.by("id").ascending());
     Page<Vehicle> vehicles = status == null || status.isBlank()
-        ? vehicleRepository.findAll(pageable)
-        : vehicleRepository.findByStatus(VehicleStatus.valueOf(status.toUpperCase()), pageable);
+        ? vehicleRepository.findByLastSeenAtIsNotNull(pageable)
+        : vehicleRepository.findByStatusAndLastSeenAtIsNotNull(VehicleStatus.valueOf(status.toUpperCase()), pageable);
 
     return PageResponse.from(vehicles, VehicleDto::from);
   }

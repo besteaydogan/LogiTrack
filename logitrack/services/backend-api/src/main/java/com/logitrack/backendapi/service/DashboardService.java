@@ -9,6 +9,7 @@ import com.logitrack.backendapi.entity.VehicleStatus;
 import com.logitrack.backendapi.repository.AlertRepository;
 import com.logitrack.backendapi.repository.DeliveryRepository;
 import com.logitrack.backendapi.repository.VehicleRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
@@ -20,15 +21,18 @@ public class DashboardService {
   private final DeliveryRepository deliveryRepository;
   private final VehicleRepository vehicleRepository;
   private final AlertRepository alertRepository;
+  private final int simulationIntervalSeconds;
 
   public DashboardService(
       DeliveryRepository deliveryRepository,
       VehicleRepository vehicleRepository,
-      AlertRepository alertRepository
+      AlertRepository alertRepository,
+      @Value("${logitrack.simulation.interval-seconds:5}") int simulationIntervalSeconds
   ) {
     this.deliveryRepository = deliveryRepository;
     this.vehicleRepository = vehicleRepository;
     this.alertRepository = alertRepository;
+    this.simulationIntervalSeconds = simulationIntervalSeconds;
   }
 
   public DashboardSummaryResponse getSummary() {
@@ -54,10 +58,13 @@ public class DashboardService {
         deliveryRepository.countByStatusIn(activeStatuses),
         deliveryRepository.countByStatus(DeliveryStatus.DELAYED),
         deliveryRepository.countByStatus(DeliveryStatus.DELIVERED),
-        vehicleRepository.countByStatusIn(List.of(VehicleStatus.ACTIVE, VehicleStatus.IDLE)),
+        vehicleRepository.countByStatusInAndLastSeenAtIsNotNull(List.of(VehicleStatus.ACTIVE, VehicleStatus.IDLE)),
         alertRepository.countByStatus(AlertStatus.UNRESOLVED),
         statusSummary,
-        recentAlerts
+        recentAlerts,
+        deliveryRepository.count(),
+        deliveryRepository.countHistoricalDeliveries(),
+        simulationIntervalSeconds
     );
   }
 }
