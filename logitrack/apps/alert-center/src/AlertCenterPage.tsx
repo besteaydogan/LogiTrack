@@ -100,6 +100,32 @@ export function AlertCenterPage() {
         const route = routeLiveEvent(event);
 
         if (route.targets.includes('alerts')) {
+          if (event.eventType === 'alert.created') {
+            const alert: Alert = {
+              id: event.alertId,
+              alertType: 'DELIVERY_DELAY',
+              severity: event.severity,
+              status: 'UNRESOLVED',
+              message: event.message,
+              deliveryId: event.deliveryId,
+              vehicleId: event.vehicleId,
+              region: event.region ?? undefined,
+              createdAt: event.timestamp,
+              resolvedAt: null,
+            };
+            queryClient.setQueryData<AlertListResponse>(queryKeys.alertsBySeverity('ALL'), (current) => current ? ({
+              ...current,
+              totalItems: Math.max(current.totalItems, current.items.length + 1),
+              items: [alert, ...current.items.filter((item) => item.id !== alert.id)],
+            }) : current);
+            if (severity !== 'ALL' && alert.severity === severity) {
+              queryClient.setQueryData<AlertListResponse>(queryKey, (current) => current ? ({
+                ...current,
+                totalItems: Math.max(current.totalItems, current.items.length + 1),
+                items: [alert, ...current.items.filter((item) => item.id !== alert.id)],
+              }) : current);
+            }
+          }
           alertsInvalidator.schedule();
         }
 

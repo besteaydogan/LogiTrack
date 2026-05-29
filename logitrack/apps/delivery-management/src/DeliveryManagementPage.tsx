@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { createDebouncedInvalidator, getDeliveries, queryKeys, routeLiveEvent, subscribeToFleetEvents } from '@logitrack/api-client';
-import type { Delivery, LiveFleetEvent } from '@logitrack/types';
+import type { Delivery, DeliveryListResponse, LiveFleetEvent } from '@logitrack/types';
 import { Badge, Button, LiveSimulationBadge, PageHeader, StateMessage, Table, type TableColumn } from '@logitrack/ui';
 
 import './DeliveryManagementPage.css';
@@ -86,6 +86,7 @@ export function DeliveryManagementPage() {
         setLastLiveEvent(event);
 
         if (routeLiveEvent(event).targets.includes('deliveries')) {
+          queryClient.setQueryData<DeliveryListResponse>(queryKeys.deliveries, (current) => patchDeliveries(current, event));
           deliveriesInvalidator.schedule();
           if (event.deliveryId) {
             setHighlightedDeliveryId(event.deliveryId);
@@ -153,3 +154,61 @@ export function DeliveryManagementPage() {
 }
 
 export default DeliveryManagementPage;
+
+function patchDeliveries(current: DeliveryListResponse | undefined, event: LiveFleetEvent) {
+  if (!current || !event.deliveryId) {
+    return current;
+  }
+
+  if (event.eventType === 'delivery.created') {
+    const delivery: Delivery = {
+      id: event.deliveryId,
+      trackingNumber: event.trackingNumber ?? event.deliveryId,
+      status: event.status,
+      priority: event.priority ?? 'NORMAL',
+      region: event.region ?? 'Region pending',
+      vehicle: { id: event.vehicleId ?? 'pending', plate: event.vehicleId ?? 'pending' },
+      driver: { id: event.driverId ?? 'pending', name: event.driverId ?? 'Driver pending' },
+      warehouse: { id: event.warehouseId ?? 'pending', name: event.warehouseId ?? 'Warehouse pending' },
+      estimatedDeliveryTime: event.estimatedDeliveryTime ?? event.timestamp,
+      actualDeliveryTime: event.actualDeliveryTime ?? null,
+      delayMinutes: event.delayMinutes ?? 0,
+      lastUpdatedAt: event.timestamp,
+    };
+
+    return {
+      ...current,
+      totalItems: Math.max(current.totalItems, current.items.length + 1),
+      items: [delivery, ...current.items.filter((item) => item.id !== delivery.id)],
+    };
+  }
+
+  return {
+    ...current,
+    items: current.items.map((delivery) => {
+      if (delivery.id !== event.deliveryId) {
+        return delivery;
+      }
+
+      if (event.eventType === 'delivery.delayed') {
+        return {
+          ...delivery,
+          status: 'DELAYED' as const,
+          delayMinutes: Math.max(delivery.delayMinutes, event.delayMinutes),
+          lastUpdatedAt: event.timestamp,
+        };
+      }
+
+      if (event.eventType === 'delivery.status.changed') {
+        return {
+          ...delivery,
+          status: event.status,
+          actualDeliveryTime: event.status === 'DELIVERED' ? event.timestamp : delivery.actualDeliveryTime,
+          lastUpdatedAt: event.timestamp,
+        };
+      }
+
+      return delivery;
+    }),
+  };
+}

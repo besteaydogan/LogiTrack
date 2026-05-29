@@ -111,6 +111,7 @@ export function AnalyticsPage() {
   const { data, error, isLoading, refetch } = useQuery({
     queryKey: queryKeys.analyticsSummary(queryFilters),
     queryFn: () => getAnalyticsSummaryGraphql(queryFilters),
+    refetchInterval: 15000,
   });
   const delayTrendChartData = useMemo(() => latestWindow(data?.delayTrend ?? [], 50), [data?.delayTrend]);
   const regionChartData = useMemo(() => latestWindow(data?.regionBreakdown ?? [], 50), [data?.regionBreakdown]);
@@ -162,7 +163,7 @@ export function AnalyticsPage() {
       <PageHeader
         eyebrow="Analytics remote"
         title="Analytics"
-        description="Historical delivery aggregation from the Spring Boot GraphQL analytics endpoint."
+        description={`Historical GraphQL analytics with live simulation refresh context. Last event: ${lastLiveEvent?.eventType ?? 'waiting'}.`}
         actions={
           <div className="analytics-filters" aria-label="Analytics filters">
             <LiveSimulationBadge connectionState={connectionState} lastEvent={lastLiveEvent} />
@@ -181,6 +182,15 @@ export function AnalyticsPage() {
           </div>
         }
       />
+
+      <section className="analytics-live-context" aria-label="Live simulation analytics context">
+        <AnalyticsKpi label="Live stream" value={connectionState} />
+        <AnalyticsKpi label="Simulation run" value={lastLiveEvent?.simulationRunId?.slice(0, 8) ?? 'pending'} />
+        <AnalyticsKpi label="Processed" value={lastLiveEvent?.processedRecords != null && lastLiveEvent?.totalRecords != null
+          ? `${lastLiveEvent.processedRecords} / ${lastLiveEvent.totalRecords}`
+          : 'pending'} />
+        <AnalyticsKpi label="Refresh window" value="15s" />
+      </section>
 
       {data.summary.totalDeliveries === 0 ? (
         <StateMessage title="No analytics data" description="Try a wider date range or clear the region filter." />

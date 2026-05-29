@@ -32,10 +32,15 @@
   padding: 0.45rem 0.6rem;
 }
 
-.analytics-kpis {
+.analytics-kpis,
+.analytics-live-context {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 14px;
+}
+
+.analytics-live-context .analytics-kpi {
+  background: #f8fafc;
 }
 
 .analytics-kpi,
