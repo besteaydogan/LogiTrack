@@ -96,7 +96,7 @@ export function Fleet3DPage() {
         <PageHeader
           eyebrow="Fleet remote"
           title="3D Operations"
-          description="Data-driven fleet visualization using analytics regions, seeded warehouses, live vehicles, status routes, and alert pulses."
+          description={`Data-driven fleet visualization using analytics regions, seeded warehouses, live vehicles, status routes, and alert pulses. Last event: ${liveEvents.lastEventType ?? 'waiting'}.`}
           actions={<Button variant="secondary" onClick={open2DMap}>2D Map</Button>}
         />
       ) : null}

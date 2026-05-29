@@ -3,9 +3,9 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import L from 'leaflet';
 import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Badge, Button, Card, PageHeader, StateMessage, Table, type TableColumn } from '@logitrack/ui';
-import { getVehicleById, getVehicles, queryKeys, subscribeToVehicleLocations } from '@logitrack/api-client';
-import type { Vehicle, VehicleListResponse, VehicleStatus } from '@logitrack/types';
+import { Badge, Button, Card, LiveSimulationBadge, PageHeader, StateMessage, Table, type TableColumn } from '@logitrack/ui';
+import { createDebouncedInvalidator, getVehicleById, getVehicles, queryKeys, routeLiveEvent, subscribeToFleetEvents, subscribeToVehicleLocations } from '@logitrack/api-client';
+import type { LiveFleetEvent, Vehicle, VehicleListResponse, VehicleStatus } from '@logitrack/types';
 
 import 'leaflet/dist/leaflet.css';
 import './FleetDashboardPage.css';
@@ -60,6 +60,8 @@ function FleetMapPage() {
   const queryClient = useQueryClient();
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
   const [liveStatus, setLiveStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
+  const [lastSimulationEvent, setLastSimulationEvent] = useState<LiveFleetEvent | null>(null);
+  const [simulationLiveStatus, setSimulationLiveStatus] = useState<'connecting' | 'connected' | 'disconnected' | 'reconnecting'>('connecting');
   const { data, error, isLoading, refetch } = useQuery({
     queryKey: queryKeys.vehicles,
     queryFn: getVehicles,
@@ -95,6 +97,72 @@ function FleetMapPage() {
     };
   }, [queryClient]);
 
+  useEffect(() => {
+    const dashboardInvalidator = createDebouncedInvalidator(() => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.dashboardSummary });
+    }, 750);
+    const deliveriesInvalidator = createDebouncedInvalidator(() => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.deliveries });
+    }, 750);
+    const alertsInvalidator = createDebouncedInvalidator(() => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.alerts });
+    }, 750);
+    const analyticsInvalidator = createDebouncedInvalidator(() => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.analyticsSummary({
+        from: '2026-05-01',
+        to: '2026-05-25',
+        region: undefined,
+      }) });
+    }, 1500);
+
+    const unsubscribe = subscribeToFleetEvents({
+      onError: () => setSimulationLiveStatus((current) => (current === 'connected' ? 'reconnecting' : 'disconnected')),
+      onMessage: (event) => {
+        setLastSimulationEvent(event);
+        const route = routeLiveEvent(event);
+
+        if (route.patchVehicle && event.eventType === 'vehicle.location.updated') {
+          queryClient.setQueryData<VehicleListResponse>(queryKeys.vehicles, (current) => current ? ({
+            ...current,
+            items: current.items.map((vehicle) => vehicle.id === event.vehicleId ? {
+              ...vehicle,
+              lastLatitude: event.latitude,
+              lastLongitude: event.longitude,
+              lastSeenAt: event.timestamp,
+              status: event.status,
+            } : vehicle),
+          }) : current);
+        }
+
+        if (route.targets.includes('dashboardSummary')) {
+          dashboardInvalidator.schedule();
+        }
+        if (route.targets.includes('deliveries')) {
+          deliveriesInvalidator.schedule();
+        }
+        if (route.targets.includes('alerts')) {
+          alertsInvalidator.schedule();
+        }
+        if (route.targets.includes('analyticsSummary')) {
+          analyticsInvalidator.schedule();
+        }
+
+        if (event.vehicleId) {
+          void queryClient.invalidateQueries({ queryKey: queryKeys.vehicle(event.vehicleId) });
+        }
+      },
+      onOpen: () => setSimulationLiveStatus('connected'),
+    });
+
+    return () => {
+      dashboardInvalidator.dispose();
+      deliveriesInvalidator.dispose();
+      alertsInvalidator.dispose();
+      analyticsInvalidator.dispose();
+      unsubscribe();
+    };
+  }, [queryClient]);
+
   if (isLoading) {
     return <StateMessage title="Loading fleet" description="Fetching fleet records from the backend API." />;
   }
@@ -119,7 +187,12 @@ function FleetMapPage() {
         eyebrow="Fleet remote"
         title="Fleet Map"
         description="Live vehicle snapshot map from the shared backend API. Simulator location events update PostgreSQL, the backend streams vehicle snapshots over SSE, and markers are throttled before cache writes."
-        actions={<Button variant="secondary" onClick={() => navigate('/fleet/3d')}>3D Operations</Button>}
+        actions={(
+          <>
+            <LiveSimulationBadge connectionState={simulationLiveStatus} lastEvent={lastSimulationEvent} />
+            <Button variant="secondary" onClick={() => navigate('/fleet/3d')}>3D Operations</Button>
+          </>
+        )}
       />
 
       <section className="fleet-kpis" aria-label="Fleet KPI summary">
@@ -128,6 +201,7 @@ function FleetMapPage() {
         <FleetKpi label="Offline" value={summary.offline} />
         <FleetKpi label="With location" value={summary.withLocation} />
         <FleetKpi label="Live stream" value={liveStatus} />
+        <FleetKpi label="Last event" value={lastSimulationEvent?.eventType ?? 'waiting'} />
       </section>
 
       <section className="fleet-map-shell" aria-label="Fleet map and selected vehicle panel">
@@ -185,10 +259,19 @@ function FleetMapPage() {
 
 function VehicleDetailPage({ vehicleId }: { vehicleId: string }) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { data: vehicle, error, isLoading, refetch } = useQuery({
     queryKey: queryKeys.vehicle(vehicleId),
     queryFn: () => getVehicleById(vehicleId),
   });
+
+  useEffect(() => subscribeToFleetEvents({
+    onMessage: (event) => {
+      if (event.vehicleId === vehicleId) {
+        void queryClient.invalidateQueries({ queryKey: queryKeys.vehicle(vehicleId) });
+      }
+    },
+  }), [queryClient, vehicleId]);
 
   if (isLoading) {
     return <StateMessage title="Loading vehicle" description="Fetching the selected vehicle profile from the backend API." />;
