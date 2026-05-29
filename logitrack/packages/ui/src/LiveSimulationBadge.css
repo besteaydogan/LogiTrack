@@ -1,0 +1,59 @@
+.live-simulation-badge {
+  display: inline-grid;
+  grid-auto-flow: column;
+  grid-template-columns: auto auto minmax(8rem, auto) auto;
+  align-items: center;
+  gap: 0.55rem;
+  max-width: 100%;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid #c9d8e4;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #102033;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.live-simulation-badge strong {
+  min-width: 0;
+  overflow: hidden;
+  color: #31536f;
+  text-overflow: ellipsis;
+}
+
+.live-simulation-badge time {
+  color: #526579;
+  font-variant-numeric: tabular-nums;
+}
+
+.live-simulation-badge__dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: #8fa1b2;
+}
+
+.live-simulation-badge__dot--connected {
+  background: #1f9d55;
+  box-shadow: 0 0 0 4px rgba(31, 157, 85, 0.14);
+}
+
+.live-simulation-badge__dot--connecting,
+.live-simulation-badge__dot--reconnecting {
+  background: #d97706;
+  box-shadow: 0 0 0 4px rgba(217, 119, 6, 0.14);
+}
+
+.live-simulation-badge__dot--disconnected {
+  background: #dc2626;
+  box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.14);
+}
+
+@media (max-width: 720px) {
+  .live-simulation-badge {
+    grid-auto-flow: row;
+    grid-template-columns: auto 1fr;
+    white-space: normal;
+  }
+}
