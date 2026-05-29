@@ -106,4 +106,20 @@ public class Delivery {
   public OffsetDateTime getLastUpdatedAt() {
     return lastUpdatedAt;
   }
+
+  public void updateSimulationStatus(DeliveryStatus status, OffsetDateTime lastUpdatedAt) {
+    this.status = status;
+    this.lastUpdatedAt = lastUpdatedAt;
+
+    if (status == DeliveryStatus.DELIVERED) {
+      this.actualDeliveryTime = lastUpdatedAt;
+    }
+  }
+
+  public void markSimulationDelayed(Integer delayMinutes, OffsetDateTime lastUpdatedAt) {
+    this.status = DeliveryStatus.DELAYED;
+    this.delayMinutes = delayMinutes;
+    this.actualDeliveryTime = lastUpdatedAt;
+    this.lastUpdatedAt = lastUpdatedAt;
+  }
 }

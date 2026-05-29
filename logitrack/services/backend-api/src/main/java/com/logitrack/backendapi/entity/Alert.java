@@ -52,6 +52,28 @@ public class Alert {
   protected Alert() {
   }
 
+  public Alert(
+      String id,
+      String alertType,
+      AlertSeverity severity,
+      AlertStatus status,
+      String message,
+      Delivery delivery,
+      Vehicle vehicle,
+      String region,
+      OffsetDateTime createdAt
+  ) {
+    this.id = id;
+    this.alertType = alertType;
+    this.severity = severity;
+    this.status = status;
+    this.message = message;
+    this.delivery = delivery;
+    this.vehicle = vehicle;
+    this.region = region;
+    this.createdAt = createdAt;
+  }
+
   public String getId() {
     return id;
   }

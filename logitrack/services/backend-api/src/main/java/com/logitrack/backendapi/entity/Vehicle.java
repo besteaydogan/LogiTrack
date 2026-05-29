@@ -82,4 +82,16 @@ public class Vehicle {
   public OffsetDateTime getLastSeenAt() {
     return lastSeenAt;
   }
+
+  public void updateSimulationLocation(
+      Double lastLatitude,
+      Double lastLongitude,
+      OffsetDateTime lastSeenAt,
+      VehicleStatus status
+  ) {
+    this.lastLatitude = lastLatitude;
+    this.lastLongitude = lastLongitude;
+    this.lastSeenAt = lastSeenAt;
+    this.status = status;
+  }
 }
