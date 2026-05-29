@@ -349,6 +349,42 @@ Example event payload:
 }
 ```
 
+### `GET /api/live/fleet`
+
+Streams event-level fleet updates after the stream consumer writes Redpanda events to PostgreSQL and calls the internal live event bridge.
+
+Event names:
+
+- `delivery.created`
+- `vehicle.location.updated`
+- `delivery.status.changed`
+- `delivery.delayed`
+- `alert.created`
+
+Example event payload:
+
+```json
+{
+  "eventType": "vehicle.location.updated",
+  "vehicleId": "VHL-001",
+  "deliveryId": "DLV-5018",
+  "alertId": null,
+  "region": "Ankara-Cankaya",
+  "latitude": 39.934,
+  "longitude": 32.861,
+  "status": "ACTIVE",
+  "speed": 42,
+  "delayMinutes": null,
+  "severity": null,
+  "message": "Vehicle VHL-001 location updated.",
+  "timestamp": "2026-05-26T09:30:00Z"
+}
+```
+
+### `POST /api/internal/live-events`
+
+Internal local-demo bridge used by the Python stream consumer after a successful database transaction. It accepts the same event-level payload shape as `/api/live/fleet` and returns `204 No Content`. This publish path is best-effort; Kafka offsets are committed based on PostgreSQL write success, not SSE delivery.
+
 ## GraphQL Contract
 
 ### `POST /graphql`

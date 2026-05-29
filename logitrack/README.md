@@ -149,6 +149,13 @@ pnpm dev
 - `VITE_API_BASE_URL`: frontend API base URL. Defaults to `http://localhost:8080`.
 - `DATABASE_URL`: PostgreSQL connection string for Python scripts and Streamlit.
 - `KAFKA_BOOTSTRAP_SERVERS`: Redpanda/Kafka-compatible broker address for Python services.
+- `SIMULATOR_INTERVAL_SECONDS`: delay between Python producer events.
+- `SIMULATOR_MAX_EVENTS`: optional producer stop count. `0` runs forever.
+- `SIMULATOR_CSV_PATH`: CSV path used by the Docker CSV replay producer. Defaults to `/data/processed/kaggle/deliveries.csv` in Compose.
+- `SIMULATOR_MIN_DELAY_SECONDS`: minimum delay between replayed CSV rows.
+- `SIMULATOR_MAX_DELAY_SECONDS`: maximum delay between replayed CSV rows.
+- `SIMULATOR_ROUTE_SEED`: deterministic route seed. Same CSV and seed produce the same replay coordinates.
+- `BACKEND_API_BASE_URL`: backend URL used by the stream consumer to publish completed DB updates to SSE.
 - `LOGITRACK_CORS_ALLOWED_ORIGIN`: backend CORS allow-list.
 
 See [.env.example](.env.example).
@@ -160,6 +167,7 @@ Services:
 - `postgres`: PostgreSQL on `localhost:55432`
 - `backend-api`: Spring Boot API on `localhost:8080`
 - `redpanda`: Kafka-compatible broker on `localhost:19092`
+- `redpanda-topics`: idempotent topic creation job
 - `data-simulator`: Python logistics event producer
 - `stream-consumer`: Python event consumer and PostgreSQL writer
 - `analytics-service`: Streamlit internal analytics UI on `localhost:8501`
@@ -168,9 +176,17 @@ Useful commands:
 
 ```bash
 docker compose down -v
-docker compose up --build
+docker compose up --build postgres redpanda redpanda-topics backend-api stream-consumer data-simulator
 docker compose build backend-api analytics-service
 docker compose up analytics-service
+docker compose run --rm redpanda-topics
+python scripts/create_redpanda_topics.py
+```
+
+Pipeline logs:
+
+```bash
+docker compose logs -f redpanda-topics data-simulator stream-consumer
 ```
 
 ## Micro-Frontend Runtime
@@ -230,6 +246,11 @@ SSE:
 - `GET /api/live/dashboard`
 - `GET /api/live/alerts`
 - `GET /api/live/vehicles`
+- `GET /api/live/fleet`
+
+Internal local-demo bridge:
+
+- `POST /api/internal/live-events`
 
 GraphQL:
 
@@ -290,6 +311,93 @@ More detail:
 - [Dataset selection](docs/dataset-selection.md)
 - [Data quality](docs/data-quality.md)
 - [Data lineage](docs/data-lineage.md)
+
+## CSV Replay Kafka/Redpanda Live Simulation
+
+The historical Kaggle `deliveries.csv` file is not imported as ready-made operational state. It is replayed as a time-spread event source. The Python simulator reads each CSV row, normalizes it, creates JSON events, publishes them to Redpanda, and lets the stream consumer build PostgreSQL state over time.
+
+Runtime flow:
+
+```text
+Python simulator
+-> deliveries.csv row normalization
+-> Redpanda topics
+-> Python stream consumer
+-> PostgreSQL updates
+-> POST /api/internal/live-events
+-> Spring Boot event-level SSE
+-> React dashboard, alerts, 2D fleet, and 3D fleet react
+```
+
+Topics:
+
+- `delivery-created`
+- `vehicle-location-updated`
+- `delivery-status-changed`
+- `delivery-delayed`
+- `alert-created`
+
+Dry-run the first 10 rows without Kafka:
+
+```powershell
+python services\data-simulator\csv_replay.py --csv data\processed\kaggle\deliveries.csv --dry-run --max-rows 10
+```
+
+Replay to local Redpanda:
+
+```powershell
+python services\data-simulator\csv_replay.py --csv data\processed\kaggle\deliveries.csv --bootstrap-servers localhost:19092 --min-delay 0.5 --max-delay 2.0
+```
+
+Run the live demo:
+
+```powershell
+docker compose down -v
+docker compose up --build postgres redpanda redpanda-topics backend-api stream-consumer data-simulator
+pnpm dev
+```
+
+Useful checks:
+
+```powershell
+docker compose logs -f redpanda-topics data-simulator stream-consumer
+curl http://localhost:8080/api/health
+curl http://localhost:8080/api/dashboard/summary
+curl http://localhost:8080/api/live/vehicles
+curl http://localhost:8080/api/live/fleet
+```
+
+Expected frontend behavior:
+
+- Dashboard shows the live simulation badge and receives refreshed KPI snapshots.
+- Alerts receives unresolved simulation alerts and briefly highlights new alert rows.
+- Fleet 2D markers move as vehicle coordinates change.
+- Fleet 3D routes and alert pulses refresh after delivery delay and alert events.
+- Simulation Control shows stream connection state, latest event type, latest sequence, and observed event count.
+
+Deterministic route behavior:
+
+- Vehicle locations are generated from `vehicle_id`, `warehouse_id`, `region`, CSV row sequence, delivery status, and `SIMULATOR_ROUTE_SEED`.
+- The route starts at the warehouse coordinate and progresses toward the region center.
+- Small deterministic jitter prevents markers from stacking exactly on top of each other.
+- Same CSV plus same seed produces the same replay coordinates.
+
+Replay and commit behavior:
+
+- `delivery.created` is idempotent. Replaying the same delivery does not create duplicate delivery rows.
+- A replayed `delivery.created` does not regress a delivery that has already moved to a later delayed or delivered state.
+- `delivery_events` remains an append-only audit stream in this phase, so replayed status/delay events can add duplicate audit rows while the current delivery state stays idempotent.
+- Kafka offsets are committed after a successful PostgreSQL transaction.
+- SSE publishing is best-effort. If `/api/internal/live-events` is temporarily unavailable after DB success, the offset is still committed and REST/snapshot SSE later expose the correct PostgreSQL state.
+
+The legacy non-Kafka tick endpoint remains available for focused backend checks:
+
+```powershell
+curl -X POST http://localhost:8080/api/simulation/tick
+python services\data-simulator\simulate_live_operations.py --interval 3 --max-events 100
+```
+
+More detail: [Live simulation plan](docs/live-simulation-plan.md).
 
 ## Data Quality
 
