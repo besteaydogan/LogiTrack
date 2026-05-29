@@ -1,4 +1,4 @@
-import { API_BASE_URL } from './config';
+import { API_BASE_URL, websocketUrl } from './config';
 import type { LiveFleetEvent, VehicleListResponse } from '@logitrack/types';
 
 export type LiveAffectedScreen = 'Dashboard' | 'Deliveries' | 'Alerts' | 'Analytics' | 'Fleet' | 'Vehicle detail';
@@ -144,33 +144,44 @@ export function subscribeToFleetEvents({
   onMessage: (payload: LiveFleetEvent) => void;
   onOpen?: () => void;
 }) {
-  const source = createLiveEventSource('/api/live/fleet');
+  let socket: WebSocket | null = null;
+  let reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
+  let closed = false;
 
-  source.onopen = () => {
-    onOpen?.();
+  const connect = () => {
+    socket = new WebSocket(websocketUrl('/ws/live-operations'));
+
+    socket.onopen = () => {
+      onOpen?.();
+    };
+
+    socket.onmessage = (event) => {
+      onMessage(JSON.parse(event.data) as LiveFleetEvent);
+    };
+
+    socket.onerror = (event) => {
+      onError?.(event);
+    };
+
+    socket.onclose = (event) => {
+      if (closed) {
+        return;
+      }
+
+      onError?.(event);
+      reconnectTimeout = setTimeout(connect, 2000);
+    };
   };
 
-  source.onmessage = (event) => {
-    onMessage(JSON.parse(event.data) as LiveFleetEvent);
+  connect();
+
+  return () => {
+    closed = true;
+
+    if (reconnectTimeout) {
+      clearTimeout(reconnectTimeout);
+    }
+
+    socket?.close();
   };
-
-  const eventTypes: LiveFleetEvent['eventType'][] = [
-    'delivery.created',
-    'vehicle.location.updated',
-    'delivery.status.changed',
-    'delivery.delayed',
-    'alert.created',
-  ];
-
-  eventTypes.forEach((eventType) => {
-    source.addEventListener(eventType, (event) => {
-      onMessage(JSON.parse((event as MessageEvent).data) as LiveFleetEvent);
-    });
-  });
-
-  if (onError) {
-    source.onerror = onError;
-  }
-
-  return () => source.close();
 }

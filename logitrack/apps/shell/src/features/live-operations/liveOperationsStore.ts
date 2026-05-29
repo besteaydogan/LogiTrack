@@ -1,6 +1,6 @@
 import { useEffect, useSyncExternalStore } from 'react';
 
-import { createLiveEventSource } from '@/services/api/live';
+import { subscribeToFleetEvents } from '@/services/api/live';
 import type {
   Alert,
   AlertListResponse,
@@ -55,7 +55,7 @@ let state: LiveOperationsState = {
 };
 
 const subscribers = new Set<() => void>();
-let source: EventSource | null = null;
+let unsubscribeLiveEvents: (() => void) | null = null;
 
 export function useLiveOperationsStream(seed?: {
   summary?: DashboardSummaryResponse;
@@ -108,37 +108,25 @@ function seedState(seed?: {
     processedRecords: seed.summary?.processedRecords ?? state.processedRecords,
     totalRecords: seed.summary?.totalRecords ?? state.totalRecords,
     simulationIntervalSeconds: seed.summary?.simulationIntervalSeconds ?? state.simulationIntervalSeconds,
-    deliveries: seed.deliveries?.items ?? state.deliveries,
-    alerts: seed.alerts?.items ?? state.alerts,
-    vehicles: seed.vehicles?.items ?? state.vehicles,
+    deliveries: mergeById(seed.deliveries?.items, state.deliveries),
+    alerts: mergeById(seed.alerts?.items, state.alerts),
+    vehicles: mergeById(seed.vehicles?.items, state.vehicles),
   });
 }
 
 function ensureLiveSource() {
-  if (source) {
+  if (unsubscribeLiveEvents) {
     return;
   }
 
-  source = createLiveEventSource('/api/live/fleet');
-  source.onopen = () => {
-    emit({ ...state, connectionState: 'connected' });
-  };
-  source.onerror = () => {
-    emit({ ...state, connectionState: state.connectionState === 'connected' ? 'reconnecting' : 'disconnected' });
-  };
-
-  const eventTypes: LiveFleetEvent['eventType'][] = [
-    'delivery.created',
-    'vehicle.location.updated',
-    'delivery.status.changed',
-    'delivery.delayed',
-    'alert.created',
-  ];
-
-  eventTypes.forEach((eventType) => {
-    source?.addEventListener(eventType, (event) => {
-      applyLiveEvent(JSON.parse((event as MessageEvent).data) as LiveFleetEvent);
-    });
+  unsubscribeLiveEvents = subscribeToFleetEvents({
+    onError: () => {
+      emit({ ...state, connectionState: state.connectionState === 'connected' ? 'reconnecting' : 'disconnected' });
+    },
+    onMessage: applyLiveEvent,
+    onOpen: () => {
+      emit({ ...state, connectionState: 'connected' });
+    },
   });
 }
 
@@ -319,4 +307,15 @@ function emptySummary(): DashboardSummaryResponse {
 
 function isDeliveryStatus(status: string | null): status is DeliveryStatus {
   return DELIVERY_STATUSES.includes(status as DeliveryStatus);
+}
+
+function mergeById<T extends { id: string }>(seedItems: T[] | undefined, currentItems: T[]) {
+  if (!seedItems) {
+    return currentItems;
+  }
+
+  const currentById = new Map(currentItems.map((item) => [item.id, item]));
+  const merged = seedItems.map((item) => currentById.get(item.id) ?? item);
+  const seedIds = new Set(seedItems.map((item) => item.id));
+  return [...currentItems.filter((item) => !seedIds.has(item.id)), ...merged];
 }
