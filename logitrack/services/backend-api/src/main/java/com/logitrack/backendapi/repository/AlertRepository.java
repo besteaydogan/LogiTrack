@@ -12,4 +12,6 @@ public interface AlertRepository extends JpaRepository<Alert, String>, JpaSpecif
   long countByStatus(AlertStatus status);
 
   List<Alert> findTop5ByStatusOrderByCreatedAtDesc(AlertStatus status);
+
+  long countByIdStartingWith(String prefix);
 }

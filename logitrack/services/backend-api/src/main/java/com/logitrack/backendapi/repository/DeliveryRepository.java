@@ -20,12 +20,17 @@ public interface DeliveryRepository
 
   List<Delivery> findTop5ByStatusOrderByLastUpdatedAtDesc(DeliveryStatus status);
 
+  List<Delivery> findByStatusIn(Collection<DeliveryStatus> statuses);
+
+  @Query(value = "SELECT COUNT(*) FROM historical_deliveries", nativeQuery = true)
+  long countHistoricalDeliveries();
+
   @Query(value = """
       SELECT
         COUNT(*) AS totalDeliveries,
         COUNT(*) FILTER (WHERE d.delay_minutes > 0) AS delayedDeliveries,
         COALESCE(AVG(NULLIF(d.delay_minutes, 0)), 0) AS averageDelayMinutes
-      FROM deliveries d
+      FROM historical_deliveries d
       WHERE CAST(d.last_updated_at AS date) >= COALESCE(CAST(:fromDate AS date), CAST(d.last_updated_at AS date))
         AND CAST(d.last_updated_at AS date) <= COALESCE(CAST(:toDate AS date), CAST(d.last_updated_at AS date))
         AND LOWER(d.region) LIKE CONCAT(LOWER(COALESCE(CAST(:region AS text), d.region)), '%')
@@ -42,7 +47,7 @@ public interface DeliveryRepository
         COUNT(*) AS totalDeliveries,
         COUNT(*) FILTER (WHERE d.delay_minutes > 0) AS delayedDeliveries,
         COALESCE(AVG(NULLIF(d.delay_minutes, 0)), 0) AS averageDelayMinutes
-      FROM deliveries d
+      FROM historical_deliveries d
       WHERE CAST(d.last_updated_at AS date) >= COALESCE(CAST(:fromDate AS date), CAST(d.last_updated_at AS date))
         AND CAST(d.last_updated_at AS date) <= COALESCE(CAST(:toDate AS date), CAST(d.last_updated_at AS date))
         AND LOWER(d.region) LIKE CONCAT(LOWER(COALESCE(CAST(:region AS text), d.region)), '%')
@@ -61,7 +66,7 @@ public interface DeliveryRepository
         COUNT(*) AS totalDeliveries,
         COUNT(*) FILTER (WHERE d.delay_minutes > 0) AS delayedDeliveries,
         COALESCE(AVG(NULLIF(d.delay_minutes, 0)), 0) AS averageDelayMinutes
-      FROM deliveries d
+      FROM historical_deliveries d
       WHERE CAST(d.last_updated_at AS date) >= COALESCE(CAST(:fromDate AS date), CAST(d.last_updated_at AS date))
         AND CAST(d.last_updated_at AS date) <= COALESCE(CAST(:toDate AS date), CAST(d.last_updated_at AS date))
         AND LOWER(d.region) LIKE CONCAT(LOWER(COALESCE(CAST(:region AS text), d.region)), '%')
@@ -81,7 +86,7 @@ public interface DeliveryRepository
         COUNT(*) AS totalDeliveries,
         COUNT(*) FILTER (WHERE d.delay_minutes > 0) AS delayedDeliveries,
         COALESCE(AVG(NULLIF(d.delay_minutes, 0)), 0) AS averageDelayMinutes
-      FROM deliveries d
+      FROM historical_deliveries d
       JOIN drivers dr ON dr.id = d.driver_id
       WHERE CAST(d.last_updated_at AS date) >= COALESCE(CAST(:fromDate AS date), CAST(d.last_updated_at AS date))
         AND CAST(d.last_updated_at AS date) <= COALESCE(CAST(:toDate AS date), CAST(d.last_updated_at AS date))
@@ -102,7 +107,7 @@ public interface DeliveryRepository
         COUNT(*) AS totalDeliveries,
         COUNT(*) FILTER (WHERE d.delay_minutes > 0) AS delayedDeliveries,
         COALESCE(AVG(NULLIF(d.delay_minutes, 0)), 0) AS averageDelayMinutes
-      FROM deliveries d
+      FROM historical_deliveries d
       JOIN vehicles v ON v.id = d.vehicle_id
       WHERE CAST(d.last_updated_at AS date) >= COALESCE(CAST(:fromDate AS date), CAST(d.last_updated_at AS date))
         AND CAST(d.last_updated_at AS date) <= COALESCE(CAST(:toDate AS date), CAST(d.last_updated_at AS date))
