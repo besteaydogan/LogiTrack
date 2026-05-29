@@ -32,10 +32,11 @@ CREATE TABLE vehicles (
   current_driver_id VARCHAR(32) REFERENCES drivers(id),
   last_latitude DOUBLE PRECISION,
   last_longitude DOUBLE PRECISION,
-  last_seen_at TIMESTAMP WITH TIME ZONE
+  last_seen_at TIMESTAMP WITH TIME ZONE,
+  simulation_run_id UUID
 );
 
-CREATE TABLE deliveries (
+CREATE TABLE historical_deliveries (
   id VARCHAR(32) PRIMARY KEY,
   tracking_number VARCHAR(64) NOT NULL,
   vehicle_id VARCHAR(32) NOT NULL REFERENCES vehicles(id),
@@ -50,6 +51,34 @@ CREATE TABLE deliveries (
   last_updated_at TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
+CREATE TABLE simulation_runs (
+  id UUID PRIMARY KEY,
+  status VARCHAR(32) NOT NULL,
+  started_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  stopped_at TIMESTAMP WITH TIME ZONE,
+  current_sequence INTEGER NOT NULL DEFAULT 0,
+  total_records INTEGER NOT NULL DEFAULT 0,
+  processed_records INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE deliveries (
+  id VARCHAR(32) PRIMARY KEY,
+  tracking_number VARCHAR(64) NOT NULL,
+  vehicle_id VARCHAR(32) NOT NULL REFERENCES vehicles(id),
+  driver_id VARCHAR(32) NOT NULL REFERENCES drivers(id),
+  warehouse_id VARCHAR(32) NOT NULL REFERENCES warehouses(id),
+  region VARCHAR(120) NOT NULL,
+  status VARCHAR(32) NOT NULL,
+  priority VARCHAR(32) NOT NULL,
+  estimated_delivery_time TIMESTAMP WITH TIME ZONE NOT NULL,
+  actual_delivery_time TIMESTAMP WITH TIME ZONE,
+  delay_minutes INTEGER NOT NULL DEFAULT 0,
+  last_updated_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  simulation_run_id UUID REFERENCES simulation_runs(id),
+  sequence INTEGER,
+  event_time TIMESTAMP WITH TIME ZONE
+);
+
 CREATE TABLE vehicle_location_events (
   id BIGSERIAL PRIMARY KEY,
   vehicle_id VARCHAR(32) NOT NULL REFERENCES vehicles(id),
@@ -57,7 +86,9 @@ CREATE TABLE vehicle_location_events (
   longitude DOUBLE PRECISION NOT NULL,
   speed INTEGER,
   fuel_level INTEGER,
-  event_time TIMESTAMP WITH TIME ZONE NOT NULL
+  event_time TIMESTAMP WITH TIME ZONE NOT NULL,
+  simulation_run_id UUID REFERENCES simulation_runs(id),
+  sequence INTEGER
 );
 
 CREATE TABLE delivery_events (
@@ -66,7 +97,9 @@ CREATE TABLE delivery_events (
   event_type VARCHAR(80) NOT NULL,
   old_status VARCHAR(32),
   new_status VARCHAR(32),
-  event_time TIMESTAMP WITH TIME ZONE NOT NULL
+  event_time TIMESTAMP WITH TIME ZONE NOT NULL,
+  simulation_run_id UUID REFERENCES simulation_runs(id),
+  sequence INTEGER
 );
 
 CREATE TABLE alerts (
@@ -79,10 +112,18 @@ CREATE TABLE alerts (
   vehicle_id VARCHAR(32) REFERENCES vehicles(id),
   region VARCHAR(120) NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE NOT NULL,
-  resolved_at TIMESTAMP WITH TIME ZONE
+  resolved_at TIMESTAMP WITH TIME ZONE,
+  simulation_run_id UUID REFERENCES simulation_runs(id),
+  sequence INTEGER,
+  event_time TIMESTAMP WITH TIME ZONE
 );
 
 CREATE INDEX idx_deliveries_status ON deliveries(status);
 CREATE INDEX idx_deliveries_region ON deliveries(region);
+CREATE INDEX idx_deliveries_simulation_run ON deliveries(simulation_run_id, sequence DESC);
 CREATE INDEX idx_alerts_status_created_at ON alerts(status, created_at DESC);
+CREATE INDEX idx_alerts_simulation_run ON alerts(simulation_run_id, created_at DESC);
 CREATE INDEX idx_vehicles_status ON vehicles(status);
+CREATE INDEX idx_vehicles_simulation_run ON vehicles(simulation_run_id, last_seen_at DESC);
+CREATE INDEX idx_historical_deliveries_region ON historical_deliveries(region);
+CREATE INDEX idx_simulation_runs_status_started_at ON simulation_runs(status, started_at DESC);
