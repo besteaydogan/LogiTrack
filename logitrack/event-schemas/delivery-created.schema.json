@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "LogiTrack Delivery Created Event",
+  "type": "object",
+  "required": [
+    "eventId",
+    "eventType",
+    "timestamp",
+    "sequence",
+    "deliveryId",
+    "trackingNumber",
+    "vehicleId",
+    "driverId",
+    "warehouseId",
+    "region",
+    "status",
+    "priority",
+    "estimatedDeliveryTime",
+    "delayMinutes"
+  ],
+  "properties": {
+    "eventId": { "type": "string" },
+    "eventType": { "const": "delivery.created" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "sequence": { "type": "integer", "minimum": 1 },
+    "deliveryId": { "type": "string" },
+    "trackingNumber": { "type": "string" },
+    "vehicleId": { "type": "string" },
+    "driverId": { "type": "string" },
+    "warehouseId": { "type": "string" },
+    "region": { "type": "string" },
+    "status": { "type": "string" },
+    "priority": { "type": "string" },
+    "estimatedDeliveryTime": { "type": "string", "format": "date-time" },
+    "actualDeliveryTime": { "type": ["string", "null"], "format": "date-time" },
+    "delayMinutes": { "type": "integer", "minimum": 0 },
+    "message": { "type": "string" }
+  },
+  "additionalProperties": true
+}

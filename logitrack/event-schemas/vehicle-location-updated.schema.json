@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "LogiTrack Vehicle Location Updated Event",
+  "type": "object",
+  "required": ["eventId", "eventType", "timestamp", "sequence", "vehicleId", "latitude", "longitude", "status"],
+  "properties": {
+    "eventId": { "type": "string" },
+    "eventType": { "const": "vehicle.location.updated" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "sequence": { "type": "integer", "minimum": 1 },
+    "vehicleId": { "type": "string" },
+    "deliveryId": { "type": ["string", "null"] },
+    "region": { "type": ["string", "null"] },
+    "latitude": { "type": "number" },
+    "longitude": { "type": "number" },
+    "status": { "type": "string" },
+    "speed": { "type": ["integer", "null"] },
+    "fuelLevel": { "type": ["integer", "null"] },
+    "message": { "type": "string" }
+  },
+  "additionalProperties": true
+}

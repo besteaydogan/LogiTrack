@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "LogiTrack Delivery Status Changed Event",
+  "type": "object",
+  "required": ["eventId", "eventType", "timestamp", "sequence", "deliveryId", "oldStatus", "newStatus"],
+  "properties": {
+    "eventId": { "type": "string" },
+    "eventType": { "const": "delivery.status.changed" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "sequence": { "type": "integer", "minimum": 1 },
+    "deliveryId": { "type": "string" },
+    "vehicleId": { "type": ["string", "null"] },
+    "region": { "type": ["string", "null"] },
+    "oldStatus": { "type": "string" },
+    "newStatus": { "type": "string" },
+    "message": { "type": "string" }
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "LogiTrack Alert Created Event",
+  "type": "object",
+  "required": ["eventId", "eventType", "timestamp", "sequence", "alertId", "alertType", "severity", "message"],
+  "properties": {
+    "eventId": { "type": "string" },
+    "eventType": { "const": "alert.created" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "sequence": { "type": "integer", "minimum": 1 },
+    "alertId": { "type": "string" },
+    "alertType": { "type": "string" },
+    "severity": { "type": "string" },
+    "deliveryId": { "type": ["string", "null"] },
+    "vehicleId": { "type": ["string", "null"] },
+    "region": { "type": ["string", "null"] },
+    "message": { "type": "string" }
+  },
+  "additionalProperties": true
+}
