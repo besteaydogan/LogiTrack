@@ -1,6 +1,7 @@
 package com.logitrack.backendapi.service;
 
 import com.logitrack.backendapi.dto.LiveFleetEventDto;
+import com.logitrack.backendapi.websocket.LiveOperationsWebSocketHandler;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -15,6 +16,11 @@ public class LiveFleetEventPublisher {
   private static final long TIMEOUT_MS = TimeUnit.MINUTES.toMillis(30);
 
   private final List<SseEmitter> emitters = new CopyOnWriteArrayList<>();
+  private final LiveOperationsWebSocketHandler liveOperationsWebSocketHandler;
+
+  public LiveFleetEventPublisher(LiveOperationsWebSocketHandler liveOperationsWebSocketHandler) {
+    this.liveOperationsWebSocketHandler = liveOperationsWebSocketHandler;
+  }
 
   public SseEmitter subscribe() {
     SseEmitter emitter = new SseEmitter(TIMEOUT_MS);
@@ -53,6 +59,8 @@ public class LiveFleetEventPublisher {
   }
 
   public void publish(LiveFleetEventDto event) {
+    liveOperationsWebSocketHandler.publish(event);
+
     for (SseEmitter emitter : emitters) {
       try {
         emitter.send(SseEmitter.event().name(event.eventType()).data(event));
