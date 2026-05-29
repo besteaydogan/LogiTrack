@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { LiveSimulationBadge } from '@logitrack/ui';
 
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -7,7 +8,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { StateMessage } from '@/components/ui/StateMessage';
 import { Table, type TableColumn } from '@/components/ui/Table';
 import { useLiveOperationsStream } from '@/features/live-operations/liveOperationsStore';
-import { createCoalescedLiveUpdater, createLiveEventSource } from '@/services/api/live';
+import { createCoalescedLiveUpdater, createLiveEventSource, subscribeToFleetEvents } from '@/services/api/live';
 import { getAlertsBySeverity, resolveAlert } from '@/services/api/logisticsApi';
 import { queryKeys } from '@/services/api/queries';
 import type { Alert, AlertListResponse, AlertSeverity } from '@/types/logistics';
@@ -82,6 +83,32 @@ export function AlertsPage() {
       setConnectionState('disconnected');
     };
   }, [queryClient, severity]);
+
+  useEffect(() => subscribeToFleetEvents({
+    onMessage: (event) => {
+      if (event.eventType !== 'alert.created') {
+        return;
+      }
+
+      const alert: Alert = {
+        id: event.alertId,
+        alertType: event.message.toLowerCase().includes('delay') ? 'DELIVERY_DELAY' : 'LIVE_EVENT',
+        severity: event.severity,
+        status: 'UNRESOLVED',
+        message: event.message,
+        deliveryId: event.deliveryId,
+        vehicleId: event.vehicleId,
+        region: event.region ?? undefined,
+        createdAt: event.timestamp,
+        resolvedAt: null,
+      };
+
+      queryClient.setQueryData<AlertListResponse>(queryKeys.alertsBySeverity('ALL'), (current) => patchAlerts(current, alert));
+      queryClient.setQueryData<AlertListResponse>(queryKey, (current) => (
+        severity === 'ALL' || alert.severity === severity ? patchAlerts(current, alert) : current
+      ));
+    },
+  }), [queryClient, queryKey, severity]);
 
   const columns = useMemo<TableColumn<Alert>[]>(() => [
     {
@@ -159,6 +186,7 @@ export function AlertsPage() {
         description={`${visibleAlerts.length} live alerts. Live stream: ${liveState.connectionState || connectionState}.`}
         actions={
           <div className="alert-filter" aria-label="Alert severity filter">
+            <LiveSimulationBadge connectionState={liveState.connectionState || connectionState} lastEvent={liveState.lastEvent} />
             {severityOptions.map((option) => (
               <Button
                 key={option}
@@ -181,4 +209,16 @@ export function AlertsPage() {
       />
     </>
   );
+}
+
+function patchAlerts(current: AlertListResponse | undefined, alert: Alert) {
+  if (!current) {
+    return current;
+  }
+
+  return {
+    ...current,
+    totalItems: Math.max(current.totalItems, current.items.length + 1),
+    items: [alert, ...current.items.filter((item) => item.id !== alert.id)],
+  };
 }
