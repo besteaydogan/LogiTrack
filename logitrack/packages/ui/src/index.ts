@@ -3,6 +3,7 @@ export * from './Button';
 export * from './Card';
 export * from './EmptyState';
 export * from './LazyPage';
+export * from './LiveSimulationBadge';
 export * from './PageHeader';
 export * from './RemoteErrorFallback';
 export * from './StateMessage';

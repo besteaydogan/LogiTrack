@@ -32,7 +32,12 @@
 }
 
 .page-header__actions {
+  display: flex;
   flex: 0 0 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
 }
 
 @media (max-width: 720px) {

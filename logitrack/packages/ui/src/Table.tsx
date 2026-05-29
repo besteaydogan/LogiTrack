@@ -14,6 +14,7 @@ type TableProps<T> = {
   columns: TableColumn<T>[];
   rows: T[];
   getRowKey: (row: T) => string;
+  getRowClassName?: (row: T) => string | undefined;
   emptyMessage: string;
   ariaLabel: string;
   virtualized?: boolean;
@@ -24,6 +25,7 @@ export function Table<T>({
   columns,
   rows,
   getRowKey,
+  getRowClassName,
   emptyMessage,
   ariaLabel,
   virtualized = false,
@@ -62,7 +64,7 @@ export function Table<T>({
               const row = rows[virtualRow.index];
 
               return (
-                <tr key={getRowKey(row)} style={{ transform: `translateY(${virtualRow.start}px)` }}>
+                <tr className={getRowClassName?.(row)} key={getRowKey(row)} style={{ transform: `translateY(${virtualRow.start}px)` }}>
                   {columns.map((column) => (
                     <td key={column.key} className={`table__cell--${column.align ?? 'left'}`}>
                       {column.render(row)}
@@ -91,7 +93,7 @@ export function Table<T>({
         </thead>
         <tbody>
           {rows.map((row) => (
-            <tr key={getRowKey(row)}>
+            <tr className={getRowClassName?.(row)} key={getRowKey(row)}>
               {columns.map((column) => (
                 <td key={column.key} className={`table__cell--${column.align ?? 'left'}`}>
                   {column.render(row)}
