@@ -5,6 +5,7 @@ import type {
   AnalyticsSummaryResponse,
   DashboardSummaryResponse,
   DeliveryListResponse,
+  LiveFleetEvent,
   Vehicle,
   VehicleListResponse,
   WarehouseListResponse,
@@ -59,6 +60,10 @@ export function getAlertsBySeverity(severity: string) {
 
 export function resolveAlert(id: string) {
   return apiRequest<Alert>(`/api/alerts/${id}/resolve`, { method: 'PATCH' });
+}
+
+export function postSimulationTick() {
+  return apiRequest<LiveFleetEvent>('/api/simulation/tick', { method: 'POST' });
 }
 
 export function getAnalyticsSummary(filters: AnalyticsFilters) {

@@ -93,6 +93,9 @@ export type DashboardSummaryResponse = {
   activeAlerts: number;
   statusSummary: StatusSummaryItem[];
   recentAlerts: Alert[];
+  processedRecords: number;
+  totalRecords: number;
+  simulationIntervalSeconds: number;
 };
 
 export type DeliveryListResponse = {
@@ -180,3 +183,73 @@ export type AnalyticsSummaryResponse = {
   driverPerformance: DriverPerformanceItem[];
   vehiclePerformance: VehiclePerformanceItem[];
 };
+
+export type LiveFleetEventBase = {
+  eventType: 'delivery.created' | 'vehicle.location.updated' | 'delivery.status.changed' | 'delivery.delayed' | 'alert.created';
+  vehicleId: string | null;
+  deliveryId: string | null;
+  alertId: string | null;
+  region: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  status: string | null;
+  speed: number | null;
+  delayMinutes: number | null;
+  severity: AlertSeverity | null;
+  message: string;
+  timestamp: string;
+  sequence: number | null;
+  simulationRunId: string | null;
+  processedRecords: number | null;
+  totalRecords: number | null;
+  simulationIntervalSeconds: number | null;
+  trackingNumber?: string | null;
+  driverId?: string | null;
+  warehouseId?: string | null;
+  priority?: DeliveryPriority | null;
+  estimatedDeliveryTime?: string | null;
+  actualDeliveryTime?: string | null;
+};
+
+export type DeliveryCreatedEvent = LiveFleetEventBase & {
+  eventType: 'delivery.created';
+  deliveryId: string;
+  vehicleId: string;
+  status: DeliveryStatus;
+};
+
+export type VehicleLocationUpdatedEvent = LiveFleetEventBase & {
+  eventType: 'vehicle.location.updated';
+  vehicleId: string;
+  latitude: number;
+  longitude: number;
+  status: VehicleStatus;
+  speed: number;
+};
+
+export type DeliveryStatusChangedEvent = LiveFleetEventBase & {
+  eventType: 'delivery.status.changed';
+  deliveryId: string;
+  status: DeliveryStatus;
+};
+
+export type DeliveryDelayedEvent = LiveFleetEventBase & {
+  eventType: 'delivery.delayed';
+  deliveryId: string;
+  delayMinutes: number;
+  severity: AlertSeverity;
+  status: 'DELAYED';
+};
+
+export type AlertCreatedEvent = LiveFleetEventBase & {
+  eventType: 'alert.created';
+  alertId: string;
+  severity: AlertSeverity;
+};
+
+export type LiveFleetEvent =
+  | DeliveryCreatedEvent
+  | VehicleLocationUpdatedEvent
+  | DeliveryStatusChangedEvent
+  | DeliveryDelayedEvent
+  | AlertCreatedEvent;
