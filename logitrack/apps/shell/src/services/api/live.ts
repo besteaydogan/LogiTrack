@@ -1,1 +1,8 @@
-export { createCoalescedLiveUpdater, createLiveEventSource } from '@logitrack/api-client';
+export {
+  createCoalescedLiveUpdater,
+  createDebouncedInvalidator,
+  createLiveEventSource,
+  getAffectedScreens,
+  routeLiveEvent,
+  subscribeToFleetEvents,
+} from '@logitrack/api-client';

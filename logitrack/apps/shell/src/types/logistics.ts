@@ -14,6 +14,7 @@ export type {
   DeliveryStatus,
   DriverPerformanceItem,
   DriverSummary,
+  LiveFleetEvent,
   RegionBreakdownItem,
   StatusSummaryItem,
   Vehicle,
