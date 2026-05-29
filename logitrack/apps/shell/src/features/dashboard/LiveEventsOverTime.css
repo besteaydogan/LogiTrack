@@ -1,0 +1,17 @@
+.live-events-chart {
+  position: relative;
+}
+
+.live-events-chart__surface {
+  min-height: 260px;
+}
+
+.live-events-chart__empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  color: #687b8d;
+  pointer-events: none;
+}
